@@ -3,6 +3,7 @@ import nltk
 import re
 
 from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
 class Word2Vec:
     def __init__(self, w2v_model, stop_words = set(stopwords.words('english'))):
@@ -17,24 +18,34 @@ class Word2Vec:
         """
         doc = doc.lower()
         words = [w for w in re.split(" |, |\n|\t", doc) if w not in self.stop_words and len(w) != 0]
+        list_tagged = []
+        #char_list = [':','[',']','(',')','?','/','>','<','!','#','+','.',',']
+        for text in words:
+            #if(text in char_list or text.startswith('-') or text.startswith('/') or text[1:].isnumeric()):
+                #continue
+            token_text = word_tokenize(text)
+            list_tagged.append(nltk.pos_tag(token_text))
         word_vecs = []
-        for word in words:
+        for data in list_tagged:
+            word = data[0][0]
+            tag = data[0][1]
             try:
                 if(word.isnumeric() or (word.startswith('-') and word[1:].isnumeric())):
-                    # print(word)
+                    #print(word)
                     continue
                 vec = self.w2v_model[word]
-                word_vecs.append(vec[0])
+                word_vecs.append((vec[0],tag))
                 # tagged = nltk.pos_tag(word_vecs)
                 # print(tagged)
             except KeyError:
                 # Ignore, if the word doesn't exist in the vocabulary
                 pass
-        # print(word_vecs)
+        #print(word_vecs)
         # Assuming that document vector is the mean of all the word vectors
         # PS: There are other & better ways to do it.
-        vector = np.mean(word_vecs, axis=0)
-        return vector
+        #vector = np.mean(word_vecs, axis=0)
+        return word_vecs
+        #return vector
 
     # def _cosine_sim(self, vecA, vecB):
     #     """Find the cosine similarity distance between two vectors."""

@@ -1,21 +1,22 @@
-import extract
-import cluster
+import use_case
 
-from gensim.models.keyedvectors import KeyedVectors
-model_path = '../model/GoogleNews-vectors-negative300.bin'
-w2v_model = KeyedVectors.load_word2vec_format(model_path, binary=True)
-# print(w2v_model)
+if __name__ == "__main__":
+    case_num = int(input("Enter Use Case: "))
+    if(case_num == 1):
+        use_case.use_case1()
+    elif(case_num == 2):
+        use_case.use_case2()
+    elif(case_num == 3):
+        use_case.use_case3()
+    elif(case_num == 4):
+        use_case.use_case4()
+    elif(case_num == 5):
+        use_case.use_case5()
+    elif(case_num == 6):
+        use_case.use_case6()
+    elif(case_num == 7):
+        use_case.use_case7()
+    else:
+        print('Invalid input. (Case range = [1,7])')
+    
 
-from word2vec import Word2Vec
-wv = Word2Vec(w2v_model)
-
-doc_vecs = []
-for str in extract.str_list:
-    word_vecs = []
-    word_vecs.append(wv.vectorize(str))
-    doc_vecs.append(word_vecs)
-
-km = cluster.mbkmeans_clusters(doc_vecs, 9, 10, True)
-print(km)
-
-# print(doc_vecs)

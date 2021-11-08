@@ -1,0 +1,44 @@
+title:
+Target //tensorflow/tools/pip_package:build_pip_package failed to build #52664
+
+user:
+g-sarapata
+
+status:
+open
+
+labels:
+stat:awaiting response
+subtype:bazel
+subtype:macOS
+type:build/install
+
+description:
+System information
+Im trying to build tensorflow to run custom code
+Using macOS Big Sur 11.4
+Tensorflow installed from source
+Can't find Tensorflow version
+Python 3.7
+bazel 3.1.0
+Intel HD Graphics 530 1536 MB
+16 GB 2133 MHz LPDDR3
+bazel build -c opt $COPT -k //tensorflow/tools/pip_package:build_pip_package
+Describe the problem
+6 errors generated.
+Target //tensorflow/tools/pip_package:build_pip_package failed to build
+ERROR: /Users/gwendolynsarapata/tensorflow/tensorflow/python/tools/BUILD:99:1 C++ compilation of rule '//tensorflow/python:bfloat16_lib' failed (Exit 1): cc_wrapper.sh failed: error executing command
+(cd /private/var/tmp/_bazel_gwendolynsarapata/0ae91cddfac444443cadbf8c325d1a60/execroot/org_tensorflow &&
+exec env -
+PATH=/Users/gwendolynsarapata/opt/anaconda3/envs/test/bin:/Users/gwendolynsarapata/opt/anaconda3/condabin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+PWD=/proc/self/cwd \
+
+...
+
+Execution platform: @local_execution_config_platform//:platform
+INFO: Elapsed time: 249.809s, Critical Path: 49.62s
+INFO: 612 processes: 612 local.
+FAILED: Build did NOT complete successfully
+
+Source code / logs
+Include any logs or source code that would be helpful to diagnose the problem. If including tracebacks, please include the full traceback. Large logs and files should be attached. Try to provide a reproducible test case that is the bare minimum necessary to generate the problem.

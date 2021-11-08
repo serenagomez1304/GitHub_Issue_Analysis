@@ -16,16 +16,26 @@ class Word2Vec:
         :param doc:
         :return:
         """
+        tags = {
+            'NN': 1,
+            'NNS': 1,
+            'NNP': 1,
+            'NNPS': 1,
+            'VB': 0.5,
+            'VBD': 0.5,
+            'VDB': 0.5,
+            'VBP': 0.5,
+            'VBZ': 0.5
+        }
+        tag_sum = 0
+        sum = 0
         doc = doc.lower()
         words = [w for w in re.split(" |, |\n|\t", doc) if w not in self.stop_words and len(w) != 0]
         list_tagged = []
-        #char_list = [':','[',']','(',')','?','/','>','<','!','#','+','.',',']
         for text in words:
-            #if(text in char_list or text.startswith('-') or text.startswith('/') or text[1:].isnumeric()):
-                #continue
             token_text = word_tokenize(text)
             list_tagged.append(nltk.pos_tag(token_text))
-        word_vecs = []
+        # word_vecs = []
         for data in list_tagged:
             word = data[0][0]
             tag = data[0][1]
@@ -34,9 +44,13 @@ class Word2Vec:
                     #print(word)
                     continue
                 vec = self.w2v_model[word]
-                word_vecs.append((vec[0],tag))
-                # tagged = nltk.pos_tag(word_vecs)
-                # print(tagged)
+                if(tag in tags):
+                    tag = tags[tag]
+                else:
+                    tag = 0
+                # word_vecs.append((vec[0],tag))
+                tag_sum += tag
+                sum += tag*vec[0]
             except KeyError:
                 # Ignore, if the word doesn't exist in the vocabulary
                 pass
@@ -44,8 +58,10 @@ class Word2Vec:
         # Assuming that document vector is the mean of all the word vectors
         # PS: There are other & better ways to do it.
         #vector = np.mean(word_vecs, axis=0)
-        return word_vecs
-        #return vector
+        vector = sum/tag_sum
+        # print(vector)
+        # return word_vecs
+        return vector
 
     # def _cosine_sim(self, vecA, vecB):
     #     """Find the cosine similarity distance between two vectors."""

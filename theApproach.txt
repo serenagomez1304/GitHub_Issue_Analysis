@@ -1,0 +1,60 @@
+GITHUB ISSUE ANALYSIS
+
+USE CASE 1: As a Contributor, when I am working on a plan to revolve an issue – I want to organize / group the list of related issues (from different users) to address them as a whole
+    - classify issues:
+        - in each issue:
+            - generate word vectors for each word
+            - provide weights to the words - using POS tag / frequecy of occurence
+        - cluster the issues using weighted k means - supervised
+        - assign a name for each cluster - How?
+        - print cluster names
+
+USE CASE 2: As a Contributor, when I am working on a plan to revolve an issue – I want to collaborate with all the users who raised that group of issues
+    - in each issue:
+        - generate word vectors for each word
+        - provide weights to the words - using POS tag / frequecy of occurence
+    - cluster the issues using weighted k means - supervised
+    - extract user info form original issue
+    - assign a name for each cluster - How?
+    - print cluster names
+        - print list of users when a particular cluster is chosen
+
+USE CASE 3: As a Contributor, when I am working on a plan to revolve an issue – I want to connect with the other contributors who were (or who are) working on any of the related issue
+    - in each issue:
+        - generate word vectors for each word
+        - provide weights to the words - using POS tag / frequecy of occurence
+    - cluster the issues using weighted k means - supervised
+    - extract contributors info form original issue
+    - assign a name for each cluster - How?
+    - print cluster names
+        - print list of contributors when a particular cluster is chosen along with issue status: open/closed
+
+USE CASE 4: As a User, when I raise a new Issue – I want to rapidly explore the list of related issues that was reported earlier;
+    - Perform USE CASE 1
+    - generate word vectors for each word in the new issue
+    - provide weights to the words - using POS tag / frequecy of occurence
+    - classify this new issue using k means -> cluster name to which it belongs
+    - print list of issues in the cluster sorted by distance
+
+USE CASE 5: As a User, when I raise a new Issue – I want to know about the existing resolutions & workaround; 
+    - Perform USE CASE 1
+    - generate word vectors for each word in the new issue
+    - provide weights to the words - using POS tag / frequecy of occurence
+    - classify this new issue using k means -> cluster name to which it belongs
+    - print list of closed issues in the cluster sorted by distance
+
+USE CASE 6: As a User, when I raise a new Issue – I want to connect with other users who faced same or similar issues;
+    - Perform USE CASE 1
+    - generate word vectors for each word in the new issue
+    - provide weights to the words - using POS tag / frequecy of occurence
+    - classify this new issue using k means -> cluster name to which it belongs
+    - print list of users of issues in the cluster sorted by distance
+
+USE CASE 7: As a User, when I raise a new Issue – I want to connect with the other contributors who were (or who are) working on any of the related issue
+    - Perform USE CASE 1
+    - generate word vectors for each word in the new issue
+    - provide weights to the words - using POS tag / frequecy of occurence
+    - classify this new issue using k means -> cluster name to which it belongs
+    - print list of contributors of issues in the cluster sorted by distance
+
+- Performance Analysis for all of the above use cases

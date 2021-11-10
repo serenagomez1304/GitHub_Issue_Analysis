@@ -17,11 +17,11 @@ if __name__ == "__main__":
     elif(case_num == 4):
         use_case4.use_case()
     elif(case_num == 5):
-        use_case5
+        use_case5.use_case()
     elif(case_num == 6):
-        use_case6
-    elif(case_num == 7):
-        use_case7
+        use_case6.use_case()
+    elif(case_num == 7): # TODO: add contributor info to issues
+        use_case7.use_case()
     else:
         print('Invalid input. (Case range = [1,7])')
     

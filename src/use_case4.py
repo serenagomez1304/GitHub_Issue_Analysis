@@ -26,6 +26,19 @@ def use_case():
                     data.append(line)
         str = ''.join(data)
         test_vector = wv.vectorize(str)
-        print(test_vector)
-        prediction = classify.knn(test_vector)
+        # print(test_vector)
+        prediction, km_labels = classify.knn(test_vector)
         print(prediction)
+    # iterate over files in that directory
+    directory = '../data/issues'
+    count = 0
+    files = []
+    for filename in os.listdir(directory):
+        # print(filename)
+        if(km_labels[count] == prediction[0]):
+            count += 1
+            file = filename.split('.')
+            files.append(file[0])
+            continue
+        count += 1
+    print(files)

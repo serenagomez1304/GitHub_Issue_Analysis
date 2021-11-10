@@ -9,4 +9,4 @@ def knn(test):
     print(km[1])
     model.fit(train_vector, km[1])
     predictions = model.predict([test])
-    return predictions
+    return predictions, km[1]

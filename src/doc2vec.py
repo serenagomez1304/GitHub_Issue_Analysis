@@ -12,9 +12,10 @@ wv = Word2Vec(w2v_model)
 def doc2vec_cluster():
     doc_vecs = []
     for str in extract.str_list:
-        word_vecs = []
-        word_vecs.append(wv.vectorize(str))
-        doc_vecs.append(word_vecs)
+        doc_vec = wv.vectorize(str)
+        doc_vecs.append(doc_vec)
+        # print(len(doc_vec))
+    # print(len(doc_vecs))
     return doc_vecs
     # km = cluster.mbkmeans_clusters(doc_vecs, 9, 10, True)
     # return km

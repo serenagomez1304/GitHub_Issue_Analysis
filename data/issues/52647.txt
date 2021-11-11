@@ -7,6 +7,8 @@ Liozizy
 status:
 open
 
+contributor:
+
 labels:
 stat:awaiting response
 

@@ -7,6 +7,10 @@ xRiot
 status:
 open
 
+contributor :
+yoangtan
+
+
 labels:
 comp:lite-examples
 stat:awaiting tensorflower

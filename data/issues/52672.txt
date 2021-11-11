@@ -1,0 +1,36 @@
+title:
+Warning persists after upgrading to Mac OS 12- Could not identify NUMA node of platform GPU ID 0 #52672
+
+user:
+par1hsharma
+
+status:
+open
+
+labels:
+comp:gpu
+stat:awaiting response
+type:bug
+
+description:
+This warning was supposed to be resolved in MacOs 12 . How to fix this?
+
+from tensorflow.keras.datasets import mnist
+from tensorflow.keras.utils import to_categorical
+
+from tensorflow.keras import layers
+from tensorflow.keras import models
+model = models.Sequential()
+model.add(layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)))
+model.add(layers.MaxPooling2D((2, 2)))
+model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model.add(layers.MaxPooling2D((2, 2)))
+model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model.add(layers.Flatten())
+model.add(layers.Dense(64, activation='relu'))
+model.add(layers.Dense(10, activation='softmax'))
+model.summary()
+
+Metal device set to: Apple M1
+2021-10-26 01:42:59.638063: I tensorflow/core/common_runtime/pluggable_device/pluggable_device_factory.cc:305] Could not identify NUMA node of platform GPU ID 0, defaulting to 0. Your kernel may not have been built with NUMA support.
+2021-10-26 01:42:59.638241: I tensorflow/core/common_runtime/pluggable_device/pluggabl

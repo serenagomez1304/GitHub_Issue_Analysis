@@ -1,5 +1,4 @@
 import numpy as np
-import nltk
 import re
 
 from nltk.corpus import stopwords
@@ -45,22 +44,17 @@ class Word2Vec:
                     continue
                 vec = self.w2v_model[word]
                 if(tag in tags):
-                    tag = tags[tag]
+                    tag_wt = tags[tag]
                 else:
-                    tag = 0
-                # word_vecs.append((vec[0],tag))
-                tag_sum += tag
-                sum += tag*vec[0]
+                    tag_wt = 0
+                word_vecs.append(vec*tag_wt)
             except KeyError:
                 # Ignore, if the word doesn't exist in the vocabulary
                 pass
         #print(word_vecs)
         # Assuming that document vector is the mean of all the word vectors
         # PS: There are other & better ways to do it.
-        #vector = np.mean(word_vecs, axis=0)
-        vector = sum/tag_sum
-        # print(vector)
-        # return word_vecs
+        vector = np.mean(word_vecs, axis=0)
         return vector
 
     # def _cosine_sim(self, vecA, vecB):

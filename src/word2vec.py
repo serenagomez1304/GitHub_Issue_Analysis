@@ -1,5 +1,4 @@
 import numpy as np
-import nltk
 import re
 
 from nltk.corpus import stopwords
@@ -24,7 +23,9 @@ class Word2Vec:
                     # print(word)
                     continue
                 vec = self.w2v_model[word]
-                word_vecs.append(vec[0])
+                # print('vec',len(vec))
+                word_vecs.append(vec)
+                # print('word',len(word_vecs))
                 # tagged = nltk.pos_tag(word_vecs)
                 # print(tagged)
             except KeyError:
@@ -33,6 +34,8 @@ class Word2Vec:
         # print(word_vecs)
         # Assuming that document vector is the mean of all the word vectors
         # PS: There are other & better ways to do it.
+        # print('doc')
+        # print(word_vecs)
         vector = np.mean(word_vecs, axis=0)
         return vector
 

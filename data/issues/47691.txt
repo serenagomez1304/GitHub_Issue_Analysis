@@ -1,0 +1,29 @@
+title:
+Numpy v1.20+ compatibility #47691
+
+user:
+ghylander
+
+status:
+open
+
+labels:
+TF 2.5
+type:build/install
+type:feature
+
+description:
+System information
+
+TensorFlow version (you are using): tf-nightly-gpu v2.5.0-dev20201214
+Are you willing to contribute it (Yes/No):
+Describe the feature and the current behavior/state.
+Tensorflow is incompatible with numpy v1.20+ (recently released). This version introduces new functions and changes behaviours.
+
+Will this change the current api? How?
+There seems to be an issue with the way tensorflow or numpy handles symbolic tensors
+
+Who will benefit with this feature?
+Anyone wishing to use the new features or packages where numpy is a dependency. Virtual environments can circumvent this, but sometimes having numpy v1.20 in the same environment as tf can be neecssary or preferable
+
+Any Other info.

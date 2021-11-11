@@ -7,7 +7,14 @@ import use_case6
 import use_case7
 
 if __name__ == "__main__":
-    case_num = int(input("Enter Use Case: "))
+    print("Use Case 1: As a Contributor - Organize/group related issues.")
+    print("Use Case 2: As a Contributor - Collaborate with users who raised a certain group of issues.")
+    print("Use Case 3: As a Contributor - Connect with contributors who work on similar issues.")
+    print("Use Case 4: As a User - Explore all issues related to my new issue.")
+    print("Use Case 5: As a User - Explore existing resolutions and workarounds to my new issue.")
+    print("Use Case 6: As a User - Connect with other users facing similar issues.")
+    print("Use Case 7: As a User - Connect with contributors working on related issues.")
+    case_num = int(input("Enter Use Case Number: "))
     if(case_num == 1):
         use_case1.use_case()
     elif(case_num == 2):

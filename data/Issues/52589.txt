@@ -1,0 +1,40 @@
+title:
+Modifying the Categorical Cross entropy for Mirrored strategy/Distributed training causing low validation accuracy #52589
+
+user:
+ashishsb0307
+
+status:
+open
+
+labels:
+comp:dist-strat
+TF 2.4
+type:performance
+
+description:
+System information
+**Have I written custom code (yes)
+**OS Platform and Distribution (Windows)
+**TensorFlow installed from (binary)
+**TensorFlow version (2.4.1)
+**Python version(3.7.9)
+**CUDA/cuDNN version(11.1/8/0):
+**GPU model and memory(Titan XP, 12 GB):
+
+Describe the problem
+For normal (single GPU training) current loss is being calculated as follows:
+
+def compute_loss(labels, predictions):
+    loss = tf.reduce_mean(
+    tf.keras.losses.categorical_crossentropy(y_true=labels, y_pred=predictions)
+    )
+    return loss
+For Mirrored strategy/Distributed training (8 GPU), I am computing loss as follows:
+
+loss_object = tf.keras.losses.CategoricalCrossentropy(from_logits=False,
+              reduction=tf.keras.losses.Reduction.NONE)
+def compute_loss(labels, predictions):
+    per_example_loss = loss_object(labels, predictions) 
+    return tf.nn.compute_average_loss(per_example_loss, global_batch_size=GLOBAL_BATCH_SIZE)
+But in the Distributed strategy the loss is not converging as fast and getting very poor validation accuracy as compared to the original.

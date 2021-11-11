@@ -7,6 +7,9 @@ GPhilo
 status:
 open
 
+contributor:
+
+
 labels:
 2.6.0
 comp:lite-xnnpack

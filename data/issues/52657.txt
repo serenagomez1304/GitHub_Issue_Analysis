@@ -1,0 +1,84 @@
+title:
+Numpy 1.21.2/3 Causing Feature Column Unit Test Failures #52657
+
+user:
+wei-v-wang 
+
+status:
+open
+
+contributor:
+gunan
+
+labels:
+comp:ops
+stat:awaiting response
+type:bug
+
+description:
+Please make sure that this is a bug. As per our
+GitHub Policy,
+we only address code/doc bugs, performance issues, feature requests and
+build/installation issues on GitHub. tag:bug_template
+
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): No
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Linux Ubuntu 16.04
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device:
+TensorFlow installed from (source or binary): source
+TensorFlow version (use command below): latest test was with 94bc26a (an Oct'25 2021 commit on main branch)
+Python version: 3.8
+Bazel version (if compiling from source): "We have bazel 3.7.2 installed."
+GCC/Compiler version (if compiling from source): gcc-7
+CUDA/cuDNN version: NA
+GPU model and memory: NA
+You can collect some of this information using our environment capture
+script
+You can also obtain the TensorFlow version with:
+
+TF 1.0: python -c "import tensorflow as tf; print(tf.GIT_VERSION, tf.VERSION)"
+TF 2.0: python -c "import tensorflow as tf; print(tf.version.GIT_VERSION, tf.version.VERSION)"
+Describe the current behavior
+This commit bumped up numpy version. f96917e
+Many CI relies on the above file to run their nightlies.
+//tensorflow/python/feature_column:feature_column_test unit test failures with numpy 1.21.2 or numpy 1.21.3 with the following error message. numpy 1.19.5 was successful.
+
+[2021-10-25T12:40:03.025Z] ERROR: test_fills_cols_to_vars (main.LinearModelTest)
+[2021-10-25T12:40:03.025Z] LinearModelTest.test_fills_cols_to_vars
+[2021-10-25T12:40:03.025Z] ----------------------------------------------------------------------
+[2021-10-25T12:40:03.025Z] Traceback (most recent call last):
+[2021-10-25T12:40:03.025Z] File "/home/tensorflow_ci_jenkins/workspace/workspace/workspace/tensorflow-eigen-test/bazel-ci_build-cache/.cache/bazel/_bazel_tensorflow_ci_jenkins/eab0d61a99b6696edb3d2aff87b585e8/execroot/org_tensorflow/bazel-out/k8-opt/bin/tensorflow/python/feature_column/feature_column_test.runfiles/org_tensorflow/tensorflow/python/feature_column/feature_column_test.py", line 1612, in test_fills_cols_to_vars
+[2021-10-25T12:40:03.025Z] self.assertAllEqual(cols_to_vars['bias'], [bias])
+[2021-10-25T12:40:03.025Z] File "/home/tensorflow_ci_jenkins/workspace/workspace/workspace/tensorflow-eigen-test/bazel-ci_build-cache/.cache/bazel/_bazel_tensorflow_ci_jenkins/eab0d61a99b6696edb3d2aff87b585e8/execroot/org_tensorflow/bazel-out/k8-opt/bin/tensorflow/python/feature_column/feature_column_test.runfiles/org_tensorflow/tensorflow/python/framework/test_util.py", line 1390, in decorated
+[2021-10-25T12:40:03.025Z] return f(*args, **kwds)
+[2021-10-25T12:40:03.025Z] File "/home/tensorflow_ci_jenkins/workspace/workspace/workspace/tensorflow-eigen-test/bazel-ci_build-cache/.cache/bazel/_bazel_tensorflow_ci_jenkins/eab0d61a99b6696edb3d2aff87b585e8/execroot/org_tensorflow/bazel-out/k8-opt/bin/tensorflow/python/feature_column/feature_column_test.runfiles/org_tensorflow/tensorflow/python/framework/test_util.py", line 3055, in assertAllEqual
+[2021-10-25T12:40:03.025Z] a = self._GetNdArray(a)
+[2021-10-25T12:40:03.025Z] File "/home/tensorflow_ci_jenkins/workspace/workspace/workspace/tensorflow-eigen-test/bazel-ci_build-cache/.cache/bazel/_bazel_tensorflow_ci_jenkins/eab0d61a99b6696edb3d2aff87b585e8/execroot/org_tensorflow/bazel-out/k8-opt/bin/tensorflow/python/feature_column/feature_column_test.runfiles/org_tensorflow/tensorflow/python/framework/test_util.py", line 2799, in _GetNdArray
+[2021-10-25T12:40:03.025Z] return np.array(a)
+[2021-10-25T12:40:03.025Z] File "/home/tensorflow_ci_jenkins/workspace/workspace/workspace/tensorflow-eigen-test/bazel-ci_build-cache/.cache/bazel/_bazel_tensorflow_ci_jenkins/eab0d61a99b6696edb3d2aff87b585e8/execroot/org_tensorflow/bazel-out/k8-opt/bin/tensorflow/python/feature_column/feature_column_test.runfiles/org_tensorflow/tensorflow/python/ops/resource_variable_ops.py", line 534, in array
+[2021-10-25T12:40:03.025Z] return np.asarray(self.numpy(), dtype=dtype)
+[2021-10-25T12:40:03.025Z] File "/home/tensorflow_ci_jenkins/workspace/workspace/workspace/tensorflow-eigen-test/bazel-ci_build-cache/.cache/bazel/_bazel_tensorflow_ci_jenkins/eab0d61a99b6696edb3d2aff87b585e8/execroot/org_tensorflow/bazel-out/k8-opt/bin/tensorflow/python/feature_column/feature_column_test.runfiles/org_tensorflow/tensorflow/python/ops/resource_variable_ops.py", line 674, in numpy
+[2021-10-25T12:40:03.025Z] raise NotImplementedError(
+[2021-10-25T12:40:03.025Z] NotImplementedError: numpy() is only available when eager execution is enabled.
+
+Describe the expected behavior
+
+The unit test should pass.
+
+Contributing
+
+Do you want to contribute a PR? (yes/no): yes
+Briefly describe your candidate solution(if contributing):
+Downgrade numpy to ~1.19.2 as workaround. Not sure about the root-cause and fix.
+Standalone code to reproduce the issue
+Provide a reproducible test case that is the bare minimum necessary to generate
+the problem. If possible, please share a link to Colab/Jupyter/any notebook.
+
+Simply run the //tensorflow/python/feature_column:feature_column_test unit test.
+
+Other info / logs Include any logs or source code that would be helpful to
+diagnose the problem. If including tracebacks, please include the full
+traceback. Large logs and files should be attached.
+
+An example full failure log can be found in Intel's public CI page via https://tensorflow-ci.intel.com/job/tensorflow-eigen-test/492/artifact/eigen_test.log/*view*/ (subject to expiration).

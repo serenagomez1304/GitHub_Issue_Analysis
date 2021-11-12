@@ -1,0 +1,35 @@
+title:
+Crash with camera2api due to unsupported ImageFormat.YUV_420_888 #52573
+
+user:
+xRiot
+
+status:
+open
+
+contributor :
+yoangtan
+
+
+labels:
+comp:lite-examples
+stat:awaiting tensorflower
+type:others
+
+description:
+Reproducible example
+Example project from https://github.com/tensorflow/examples/tree/master/lite/examples/pose_estimation/android crashes after allowing camera permission due to:
+
+org.tensorflow.lite.examples.poseestimation W/CameraDevice-JV-4: Stream configuration failed due to: createSurfaceFromGbp:1583: Camera 4: No supported stream configurations with format 0x23 defined, failed to create output stream
+Adbcat error log
+From start to crash:
+https://gist.githubusercontent.com/xRiot/f50680c94ec65dfdfae52fda609665b7/raw/aa95bf99362751f1af6d2e53fb20bfc9168c4bdc/gistfile1.txt
+
+Environment
+This issue is specific to Android 11 on Samsung Galaxy s20+
+
+Source of the issue
+This line causes the error, it seems like YUV_420_888 is not supported on my particular device:
+
+ImageReader.newInstance(PREVIEW_WIDTH, PREVIEW_HEIGHT, ImageFormat.YUV_420_888, 3)
+

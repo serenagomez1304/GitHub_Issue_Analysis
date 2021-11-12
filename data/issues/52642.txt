@@ -1,0 +1,48 @@
+title:
+Frozen graph converted by freeze_graph.py is not usable #52642
+
+user:
+Wanzizhu
+
+status:
+open
+
+contributor:
+
+
+labels:
+2.6.0
+comp:apis
+stat:awaiting response
+type:bug
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): No
+OS Platform and Distribution: Ubuntu 20.04.2
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device: No
+TensorFlow installed from (source or binary): binary
+TensorFlow version (use command below): 2.6.0
+Python version: 3.9.5
+Bazel version (if compiling from source): No
+GCC/Compiler version (if compiling from source): No
+CUDA/cuDNN version: No
+GPU model and memory: No
+Describe the current behavior
+I tried to convert tf2 object detection into a frozen graph. I downloaded the model from here.
+At first, i tried to use tf tool freeze_graph.py, it worked. But the converted pb is not usable, it cannot run normally as tf1 pb downloaded here
+Then i tried to convert tf2 ckpt to tf1 ckpt, using the script here, but the converted ckpt was not usable either.
+Could you please tell me is there any way to convert or maybe how to run this different pb?
+
+Standalone code to reproduce the issue
+
+code to convert saved model to frozen graph
+path=/path/to/saved_model
+python tensorflow/python/tools/freeze_graph.py \
+--input_saved_model_dir=$path/saved_model \
+--output_node_names=StatefulPartitionedCall \
+--output_graph=$path/tf2.pb
+error when running this converted pb
+tensorflow.python.framework.errors_impl.InvalidArgumentError: Failed to find function "__inference_signature_wrapper_frozen_1938" in function library:
+

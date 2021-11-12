@@ -1,0 +1,75 @@
+title:
+TFLite: XNNPACK delegate failed to delegate FULLY_CONNECTED node #52653
+
+user:
+GPhilo 
+
+status:
+open
+
+contributor:
+
+
+labels:
+2.6.0
+comp:lite-xnnpack
+type:bug
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): Yes
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Windows 10
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device: -
+TensorFlow installed from (source or binary): Source for inference, Binary for model generation
+TensorFlow version (use command below): r2.6.0 (from git tag) for the inference code. 2.4.1 for model generation.
+Python version: 3.8.5 (model generation side only)
+Bazel version (if compiling from source): N/A, I'm building TFLite via CMake
+GCC/Compiler version (if compiling from source): MSVC 19.29.30136.0
+CUDA/cuDNN version: N/A
+GPU model and memory: N/A
+Describe the current behavior
+When loading the attached MobileNet model via the TFLite C API, the XNNPACK delegate fails with the following output:
+
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+ERROR: failed to delegate FULLY_CONNECTED node #67
+ERROR: Node number 83 (TfLiteXNNPackDelegate) failed to prepare.
+Describe the expected behavior
+The model loads correctly.
+
+Contributing
+
+Do you want to contribute a PR? (yes/no): no
+Briefly describe your candidate solution(if contributing): -
+Standalone code to reproduce the issue
+
+Model file: model.fp32.tflite.zip
+
+Model generation (if not using the attached tflite model):
+import tensorflow as tf
+from pathlib import Path
+strategy = tf.distribute.MirroredStrategy()
+with strategy.scope():
+  base_model = tf.keras.applications.mobilenet_v2.MobileNetV2(
+        input_shape=(224,224,3), alpha=1.0, weights='imagenet',
+        classes=6, include_top=False, pooling='avg')
+  output = tf.keras.layers.Dense(6, name='logits', dtype='float32')(base_model.output)
+  model = tf.keras.Model(base_model.inputs, output)
+
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+tflite_model = converter.convert()
+Path('model.fp32.tflite').write_bytes(tflite_model)
+Model loading in Cpp
+#include <tensorflow/lite/c/c_api.h>
+#include <tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h>
+
+int main()
+{
+    auto m_model = TfLiteModelCreateFromFile("model.fp32.tflite");
+    auto m_options = TfLiteInterpreterOptionsCreate();
+    TfLiteXNNPackDelegateOptions opt = TfLiteXNNPackDelegateOptionsDefault();
+    auto m_xnnpack_delegate = TfLiteXNNPackDelegateCreate(&opt);
+    TfLiteInterpreterOptionsAddDelegate(m_options, m_xnnpack_delegate);
+    auto m_interpreter = TfLiteInterpreterCreate(m_model, m_options); // This returns nullptr and prints error messages in the console
+}

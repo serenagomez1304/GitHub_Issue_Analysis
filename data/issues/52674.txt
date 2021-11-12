@@ -1,0 +1,55 @@
+title:
+Install error on m1 MBP (Python 3.9) #52674
+
+user:
+insung3511
+ 
+status:
+open
+
+contributor :
+yoangtan
+
+labels:
+stat:awaiting response
+subtype:macOS
+type:build/install
+
+description:
+Please make sure that this is a build/installation issue. As per our GitHub Policy, we only address code/doc bugs, performance issues, feature requests and build/installation issues on GitHub. tag:build_template
+
+System information
+
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): macOS Big Sur 11.6
+TensorFlow installed from (source or binary): Try it but not worked.
+Python version: 3.9.5
+Installed using virtualenv? pip? conda?: conda
+GPU model and memory: M1
+Okay. I was try to installing on my m1 mbp (python 3.9) and i got some error like this..
+
+Installation script for pre-release tensorflow_macos 0.1alpha3.  Please visit https://github.com/apple/tensorflow_macos
+for instructions and license information.
+
+This script will download tensorflow_macos 0.1alpha3 and needed binary dependencies, then install them into a new
+or existing Python 3.8 virtual environment.
+Continue [y/N]? y
+
+Downloading installer.
+/var/folders/01/5f5ftlvn2w7c9prxbs4410780000gn/T/tmp.U2PQuGHt ~
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   641  100   641    0     0   8434      0 --:--:-- --:--:-- --:--:--  8434
+100  359M  100  359M    0     0  4320k      0  0:01:25  0:01:25 --:--:-- 5176k
+Extracting installer.
+Path to new or existing virtual environment [default: /Users/bahk_insung/tensorflow_macos_venv/]: /Users/bahk_insung/miniforge3/envs/pycv/tensorflow_mac_venv/
+##############################################################
+
+ERROR: Error retrieving python version, or python executable /Users/bahk_insung/miniforge3/envs/pycv/bin/python3 not version 3.8.  Please specify a Python 3.8 executable with the --python option.
+
+
+Error running installation script with default options.  Please fix the above errors and proceed by running
+
+  /var/folders/01/5f5ftlvn2w7c9prxbs4410780000gn/T/tmp.U2PQuGHt/tensorflow_macos/install_venv.sh --prompt
+
+
+I think my conda environment is not fitted for tensorflow. I try it with this one. plz help me why does it.

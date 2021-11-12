@@ -1,0 +1,46 @@
+title:
+MirroredStrategy throw always AttributeError at the end of execution #52607
+
+user:
+TheEnigmist
+
+status:
+open
+
+contributor :
+yoangtan
+
+
+labels:
+comp:dist-strat
+stat:awaiting response
+TF 2.5
+type:bug
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): No
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Linux Ubuntu 16.04
+TensorFlow installed from (source or binary): pip
+TensorFlow version (use command below): v2.5.0-rc3-213-ga4dfb8d1a71 2.5.0
+Python version: 3.7
+CUDA/cuDNN version: 11.2/8.1.0
+GPU model and memory: 10x GTX 1080ti
+Describe the current behavior
+When using a strategy at the end of the program I got an AttributeError exception.
+
+Exception ignored in: <function Pool.__del__ at 0x7f06a661ac10> 
+Traceback (most recent call last): 
+  File "/usr/lib/python3.8/multiprocessing/pool.py", line 268, in del 
+  File "/usr/lib/python3.8/multiprocessing/queues.py", line 362, in put 
+AttributeError: 'NoneType' object has no attribute 'dumps'
+The program works as expected, but it shows always that exception.
+
+Describe the expected behavior
+The program should exit without this exception
+
+Standalone code to reproduce the issue
+
+import tensorflow as tf 
+strategy = tf.distribute.MirroredStrategy()

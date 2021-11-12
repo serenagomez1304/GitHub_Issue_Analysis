@@ -1,0 +1,83 @@
+title:
+MirroredVariable has different values on replicas (only first device is correct) #52619
+
+user:
+isarandi 
+
+status:
+open
+
+contributor:
+
+
+labels:
+2.6.0
+comp:dist-strat
+type:bug
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): yes, two lines
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Ubuntu 18.04
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device: -
+TensorFlow installed from (source or binary): binary (pip)
+TensorFlow version (use command below): 2.6.0 (but I also tried tf-nightly with the same result)
+Python version: 3.8
+Bazel version (if compiling from source): -
+GCC/Compiler version (if compiling from source): -
+CUDA/cuDNN version: 11.2 / 8.1.1 (same behavior also with 11.4 / 8.2.4)
+GPU model and memory: 4 x NVIDIA A40 (48GB)
+Describe the current behavior
+
+Minimal code example:
+
+import tensorflow as tf
+    
+with tf.distribute.MirroredStrategy().scope():
+    print(tf.Variable(1.))
+Output is:
+
+INFO:tensorflow:Using MirroredStrategy with devices ('/job:localhost/replica:0/task:0/device:GPU:0', '/job:localhost/replica:0/task:0/device:GPU:1', '/job:localhost/replica:0/task:0/device:GPU:2', '/job:localhost/replica:0/task:0/device:GPU:3')
+MirroredVariable:{
+  0: <tf.Variable 'Variable:0' shape=() dtype=float32, numpy=1.0>,
+  1: <tf.Variable 'Variable/replica_1:0' shape=() dtype=float32, numpy=0.0>,
+  2: <tf.Variable 'Variable/replica_2:0' shape=() dtype=float32, numpy=0.0>,
+  3: <tf.Variable 'Variable/replica_2:0' shape=() dtype=float32, numpy=0.0>
+}
+The problem is, as seen above, that the replicas do not contain the correct variable value, all are zero values except on the first device (the numpy=0.0 parts). This is the same with 2 or 3 devices as well, not just with all 4.
+
+(The same code does produce the expected behavior on a different machine with 2x Titan RTX GPUs.)
+
+This is simply the minimal reproducing example. The real-world consequence when performing multi-gpu training is that the first forward pass succeeds, but after the first SGD update, things become NaN.
+
+Describe the expected behavior
+
+Expected output would be:
+
+INFO:tensorflow:Using MirroredStrategy with devices ('/job:localhost/replica:0/task:0/device:GPU:0', '/job:localhost/replica:0/task:0/device:GPU:1', '/job:localhost/replica:0/task:0/device:GPU:2', '/job:localhost/replica:0/task:0/device:GPU:3')
+MirroredVariable:{
+  0: <tf.Variable 'Variable:0' shape=() dtype=float32, numpy=1.0>,
+  1: <tf.Variable 'Variable/replica_1:0' shape=() dtype=float32, numpy=1.0>,
+  2: <tf.Variable 'Variable/replica_2:0' shape=() dtype=float32, numpy=1.0>,
+  3: <tf.Variable 'Variable/replica_2:0' shape=() dtype=float32, numpy=1.0>
+}
+(Note the numpy=1.0 parts.)
+
+Contributing
+
+Do you want to contribute a PR? (yes/no): no
+Briefly describe your candidate solution(if contributing):
+Standalone code to reproduce the issue
+Provide a reproducible test case that is the bare minimum necessary to generate
+the problem. If possible, please share a link to Colab/Jupyter/any notebook.
+
+import tensorflow as tf
+    
+with tf.distribute.MirroredStrategy().scope():
+    print(tf.Variable(1.))
+Other info / logs Include any logs or source code that would be helpful to
+diagnose the problem. If including tracebacks, please include the full
+traceback. Large logs and files should be attached.
+
+The server in question is a Dell PowerEdge R750xa with 4x Nvidia A40 GPUs.

@@ -1,0 +1,39 @@
+title:
+The keras.layere.reshape() is a dynamic-sized tensor ? convert CRNN model to TFLite cannot work on android GPU #52616
+
+user:
+Yunlei-AI
+
+status:
+open
+contributor:
+
+
+labels:
+TF 2.4
+TFLiteConverter
+type:bug
+
+description:
+1. System information
+Linux Ubuntu 20.04,
+android API 25
+tf-nightly keras=2.4.3
+2. Code
+CRNN model use rashape like this:
+
+ x = layers.Reshape((4, 128))(x)
+Convert code:
+
+keras_model = models.load_model(model_path, custom_objects={ 'precision': precision, 'recall': recall, 'f_score': f_score})
+converter = tf.lite.TFLiteConverter.from_keras_model(keras_model)
+tflite_model = converter.convert()
+open(save_mdl_path, "wb").write(tflite_model)
+3. (optional) Any other info / logs
+The CRNN TFlite model (have rashape) can work on Android CPU, but set GPU will get erro: "java.lang.IllegalArgumentException: Internal error: Failed to apply delegate: Attempting to use a delegate that only supports static-sized tensors with a graph that has dynamic-sized tensors (tensor#40 is a dynamic-sized tensor)."
+
+The tflite model can work on android GPU when delete the layers.rshape and GRU .
+
+I need reshspe layer for 3D to 2D dim. how I can do this?
+
+thanks advance

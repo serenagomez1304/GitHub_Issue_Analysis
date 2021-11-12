@@ -1,0 +1,68 @@
+title:
+'tf.Selu' op is neither a custom op nor a flex op
+
+user:
+napsta32
+
+status:
+closed
+
+labels:
+type:bug
+
+contributors:
+mdanatg
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow):
+OS: Windows 10
+TensorFlow installed from (source or binary): binary
+TensorFlow version (use command below): v2.6.0-rc2-32-g919f693420e 2.6.0
+Python version: 3.8
+CUDA/cuDNN version: 11.4
+GPU model and memory: GTX 1060
+Describe the current behavior
+Error when quantizing a model with selu activation.
+
+Describe the expected behavior
+Quantize selu activation.
+
+Contributing
+
+Do you want to contribute a PR? (yes/no): no (sorry)
+Standalone code to reproduce the issue
+
+import tensorflow as tf
+import pathlib
+
+def get_model():
+    input_layer = tf.keras.Input(shape=[128], dtype=tf.float32)
+    dense = tf.keras.layers.Dense(128, kernel_initializer='lecun_normal', activation='selu')(input_layer)
+    return tf.keras.models.Model(inputs=input_layer, outputs=dense)
+
+def quantize(model):
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    converter.optimizations = [tf.lite.Optimize.DEFAULT]
+    converter.target_spec.supported_types = [tf.float16]
+    tflite_model = converter.convert()
+
+    tflite_models_dir = pathlib.Path('.')
+    tflite_models_dir.mkdir(exist_ok=True, parents=True)
+    tflite_model_file = tflite_models_dir/'unquantizable.tflite'
+    tflite_model_file.write_bytes(tflite_model)
+    pass
+
+if __name__ == '__main__':
+    model = get_model()
+    quantize(model)
+    pass
+Other info / logs
+
+error: 'tf.Selu' op is neither a custom op nor a flex op
+error: failed while converting: 'main':
+Some ops are not supported by the native TFLite runtime, you can enable TF kernels fallback using TF Select. See instructions: https://www.tensorflow.org/lite/guide/ops_select
+TF Select ops: Selu
+Details:
+        tf.Selu(tensor<?x128xf32>) -> (tensor<?x128xf32>) : {device = ""}

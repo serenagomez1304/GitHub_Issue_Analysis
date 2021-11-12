@@ -1,0 +1,76 @@
+title:
+tensoflow.keras.preprocessing.image_dataset_from_directory doesn't recognize there are files in a directory when labels are supplied as a list/tupple
+
+user:
+AngCamp
+
+status:
+closed
+
+labels:
+comp:keras
+stat:awaiting response
+TF 2.4
+type:bug
+
+contributors:
+gunan
+jpienaar
+
+description:
+Please make sure that this is a bug. As per our
+GitHub Policy,
+we only address code/doc bugs, performance issues, feature requests and
+build/installation issues on GitHub. tag:bug_template
+
+https://keras.io/api/preprocessing/image/#imagedatasetfromdirectory-function
+
+My code:
+
+img_width = 224
+img_hieght = 224
+batch_size = 100
+train_labels = train_metadat_df.sort_values(by='filename')['sirna'].tolist()
+
+train_ds = tf.keras.preprocessing.image_dataset_from_directory(
+  "../input/recursion-cellular-image-classification-224-jpg/train/train",
+  validation_split=0.2,
+  subset="training",
+  labels= train_labels,
+  label_mode= "categorical",
+  seed=123,
+  image_size=(img_height, img_width),
+  batch_size=batch_size)
+This function normally takes a pointer for a directory with images organized by lab into directories ( i.e. all flowers in a file called flowers, all animals in a file called animals) and then outputs a dataset object. But there is also an option to provide a list of
+When providing a list of file labels instead but when this happens the following error is produced:
+
+ValueError: Expected the lengths of labels to match the number of files in the target directory. len(labels) is 73030 while we found 0 files in ../input/recursion-cellular-image-classification-224-jpg/train/train.
+
+There are ~73000 .jpeg files in that directory and when I run it on ../input/recursion-cellular-image-classification-224-jpg/train it finds ~54000 of them and trains them all on one class (because they are all stored in one file).
+
+System information
+
+using Tensorflow in a kaggle notebook
+currently no GPU is turned on
+tensorflow version 2.4.1
+You can collect some of this information using our environment capture
+script
+You can also obtain the TensorFlow version with:
+
+TF 1.0: python -c "import tensorflow as tf; print(tf.GIT_VERSION, tf.VERSION)"
+TF 2.0: python -c "import tensorflow as tf; print(tf.version.GIT_VERSION, tf.version.VERSION)"
+Describe the current behavior
+
+Describe the expected behavior
+
+Contributing
+
+Do you want to contribute a PR? (yes/no):
+Briefly describe your candidate solution(if contributing):
+Standalone code to reproduce the issue
+Provide a reproducible test case that is the bare minimum necessary to generate
+the problem. If possible, please share a link to Colab/Jupyter/any notebook.
+
+Other info / logs Include any logs or source code that would be helpful to
+diagnose the problem. If including tracebacks, please include the full
+traceback. Large logs and files should be attached.

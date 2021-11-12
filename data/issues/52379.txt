@@ -1,0 +1,412 @@
+title:
+ctc_loss_calculator.h:499] No valid path found
+
+user:
+schissmantics
+
+status:
+closed
+
+labels:
+2.6.0
+stat:awaiting response
+type:bug
+
+contributors:
+yongtang
+gunan
+
+description:
+Please make sure that this is a bug. As per our
+GitHub Policy,
+we only address code/doc bugs, performance issues, feature requests and
+build/installation issues on GitHub. tag:bug_template
+
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow):
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): macOs Big Sur 11.6
+TensorFlow installed from (source or binary): binary
+TensorFlow version (use command below): v2.6.0-rc2-32-g919f693420e 2.6.0
+Python version: 3.9.7
+Bazel version (if compiling from source):
+GCC/Compiler version (if compiling from source):
+CUDA/cuDNN version:
+GPU model and memory:
+You can collect some of this information using our environment capture
+script
+You can also obtain the TensorFlow version with:
+
+TF 1.0: python -c "import tensorflow as tf; print(tf.GIT_VERSION, tf.VERSION)"
+TF 2.0: python -c "import tensorflow as tf; print(tf.version.GIT_VERSION, tf.version.VERSION)"
+Describe the current behavior
+
+The issue is addressed in multiple SO questions and none provides a clear solution if any answers at all
+
+CTC loss Tensorflow, No valid path found
+ctc_loss error "No valid path found."
+CTC Loss bug: no valid path found? OCR difficulties in Tf.keras
+Tensorflow ctc_loss_calculator: No valid path found
+Here's the code I run ...
+
+from itertools import groupby
+from pathlib import Path
+
+import numpy as np
+import tensorflow as tf
+from matplotlib import pyplot as plt
+from tensorflow.keras import Model
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import (LSTM, BatchNormalization, Bidirectional,
+                                     Conv2D, Dense, Input, Lambda, Layer,
+                                     MaxPool2D)
+from tensorflow.keras.layers.experimental.preprocessing import StringLookup
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+
+class CTCLayer(Layer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.loss_fn = tf.keras.backend.ctc_batch_cost
+
+    def call(self, y_true, *args, **kwargs):
+        y_pred = args[0]
+        batch_len = tf.cast(tf.shape(y_true)[0], dtype='int64')
+        input_length = tf.cast(tf.shape(y_pred)[1], dtype='int64')
+        label_length = tf.cast(tf.shape(y_true)[1], dtype='int64')
+        input_length = input_length * tf.ones(shape=(batch_len, 1), dtype='int64')
+        label_length = label_length * tf.ones(shape=(batch_len, 1), dtype='int64')
+        loss = self.loss_fn(y_true, y_pred, input_length, label_length)
+        self.add_loss(loss)
+        return y_pred
+
+
+class TrainingManager:
+    def __init__(
+        self, images, labels, batch_size=256, validation_size=0.1, resize=(32, 128)
+    ):
+        self.images = images
+        self.labels = labels
+        self.batch_size = batch_size
+        self.validation_size = validation_size
+        self.resize = resize
+        self.vocabulary = sorted(set(''.join(self.labels)))
+        self.max_label_length = len(max(self.labels, key=len))
+        self.char_to_num = StringLookup(
+            vocabulary=self.vocabulary, num_oov_indices=0, mask_token=None
+        )
+        self.num_to_char = StringLookup(
+            vocabulary=self.char_to_num.get_vocabulary(), mask_token=None, invert=True
+        )
+
+    def process_example(self, img_path, label):
+        img = tf.io.read_file(img_path)
+        img = tf.io.decode_png(img, channels=1)
+        img = tf.image.convert_image_dtype(img, tf.float32)
+        img = tf.image.resize(img, self.resize)
+        return {'image': img, 'label': label}
+
+    def preview_dataset(self, dataset, n_rows, n_cols, fig_size=(15, 10)):
+        fig, ax = plt.subplots(n_rows, n_cols, figsize=fig_size)
+        for batch in dataset.take(1):
+            images = batch['image']
+            labels = batch['label']
+            for i in range(n_rows * n_cols):
+                img = (images[i] * 255).numpy().astype('uint8')
+                label = (
+                    tf.strings.reduce_join(self.num_to_char(labels[i] + 1))
+                    .numpy()
+                    .decode('utf-8')
+                    .replace('[UNK]', '')
+                )
+                ax[i // n_rows, i % n_cols].imshow(img[:, :, 0], cmap='gray')
+                ax[i // n_rows, i % n_cols].set_title(label)
+                ax[i // n_rows, i % n_cols].axis('off')
+
+    def decode_predictions(self, predictions):
+        text_list = []
+        prediction_indices = np.argmax(predictions, axis=2)
+        for i in range(prediction_indices.shape[0]):
+            text = ''
+            for p, _ in groupby(prediction_indices[i]):
+                if p != len(self.vocabulary):
+                    text += self.vocabulary[p]
+            text_list.append(text)
+        return text_list
+
+    def create_dataset(self, x, y):
+        dataset = tf.data.Dataset.from_tensor_slices((x, y))
+        return (
+            dataset.map(
+                self.process_example, num_parallel_calls=tf.data.experimental.AUTOTUNE
+            )
+            .batch(self.batch_size)
+            .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+        )
+
+    def split_data(self):
+        separation_idx = int(len(self.images) * (self.validation_size - 1))
+        train_images = self.images[:separation_idx]
+        valid_images = self.images[separation_idx:]
+        labels = [
+            self.char_to_num(tf.strings.unicode_split(label, input_encoding='UTF-8'))
+            for label in self.labels
+        ]
+        labels = pad_sequences(labels, self.max_label_length, padding='post')
+        train_labels = labels[:separation_idx]
+        valid_labels = labels[separation_idx:]
+        return train_images, valid_images, train_labels, valid_labels
+
+    def create_datasets(self):
+        train_images, valid_images, train_labels, valid_labels = self.split_data()
+        train_dataset = self.create_dataset(train_images, train_labels)
+        valid_dataset = self.create_dataset(valid_images, valid_labels)
+        return train_dataset, valid_dataset
+
+    def create_model(self, training=True):
+        x0 = Input(shape=(32, 128, 1), name='image')
+        x = Conv2D(32, (3, 3), activation='selu', padding='same')(x0)
+        x = MaxPool2D(pool_size=(2, 2))(x)
+        x = Conv2D(64, (3, 3), activation='selu', padding='same')(x)
+        x = MaxPool2D(pool_size=(2, 2))(x)
+        x = Conv2D(128, (3, 3), activation='selu', padding='same')(x)
+        x = Conv2D(128, (3, 3), activation='selu', padding='same')(x)
+        x = MaxPool2D(pool_size=(2, 1))(x)
+        x = Conv2D(256, (3, 3), activation='selu', padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Conv2D(256, (3, 3), activation='selu', padding='same')(x)
+        x = BatchNormalization()(x)
+        x = MaxPool2D(pool_size=(2, 1))(x)
+        x = Conv2D(64, (2, 2), activation='selu')(x)
+        x = Lambda(lambda i: tf.squeeze(i, 1))(x)
+        x = Bidirectional(LSTM(128, return_sequences=True))(x)
+        x = Bidirectional(LSTM(128, return_sequences=True))(x)
+        output = Dense(len(self.vocabulary) + 1, activation='softmax', name='dense')(x)
+        if not training:
+            return Model(x0, output)
+        labels = Input(name='label', shape=(None,), dtype='float32')
+        output = CTCLayer(name='ctc_loss')(labels, output)
+        return Model(inputs=[x0, labels], outputs=output)
+
+
+if __name__ == '__main__':
+    photos, texts = [], []
+    for line in open('labels.txt'):
+        photo_path, photo_text = line.split(',')
+        photos.append((Path('examples') / photo_path).as_posix())
+        texts.append(photo_text.strip())
+    manager = TrainingManager(photos, texts, batch_size=32)
+    optimizer = Adam()
+    model = manager.create_model()
+    model.compile(optimizer=optimizer, metrics=[tf.keras.metrics.Accuracy()])
+    model.summary()
+    tds, vds = manager.create_datasets()
+    manager.preview_dataset(tds, 2, 2)
+    plt.show()
+    history = model.fit(
+        tds,
+        epochs=100,
+        validation_data=vds,
+        verbose=1,
+        callbacks=[EarlyStopping(verbose=1, patience=3, restore_best_weights=True)],
+        shuffle=True,
+    )
+examples + labels.txt (inside examples folder)
+
+examples.tar.gz
+
+Note: The code works perfectly fine for labels that are 15 characters long or shorter. The labels and respective photos in the example above have 1-20 characters each. What exactly do I need to modify, to make it work, given a label of length n?
+
+Describe the expected behavior
+
+Contributing
+
+Do you want to contribute a PR? (yes/no):
+Briefly describe your candidate solution(if contributing):
+Standalone code to reproduce the issue
+Provide a reproducible test case that is the bare minimum necessary to generate
+the problem. If possible, please share a link to Colab/Jupyter/any notebook.
+
+Other info / logs Include any logs or source code that would be helpful to
+diagnose the problem. If including tracebacks, please include the full
+traceback. Large logs and files should be attached.
+
+2021-10-14 05:22:31.610 Python[18731:595755] ApplePersistenceIgnoreState: Existing state will not be touched. New state will be written to /var/folders/hr/61r_7jcx2r3cnklwrr2zwbqw0000gn/T/org.python.python.savedState
+2021-10-14 05:22:31.746089: I tensorflow/compiler/mlir/mlir_graph_optimization_pass.cc:185] None of the MLIR Optimization Passes are enabled (registered 2)
+Epoch 1/100
+2021-10-14 05:22:41.480510: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:41.480551: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:41.480614: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:41.480785: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+1/1 [==============================] - ETA: 0s - loss: inf - accuracy: 0.0000e+002021-10-14 05:22:44.004554: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.004595: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.004646: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.004705: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.004822: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.004859: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.004890: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.004907: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.005056: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.005073: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.005204: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.005233: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.005292: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.005322: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.160657: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.160745: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.160787: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.160862: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.160886: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.160959: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161019: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161058: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161081: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161108: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161236: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161306: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161352: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161394: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161416: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161439: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161504: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.161650: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.315489: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.315528: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.315676: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.316045: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.316060: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.316151: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.316276: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.316282: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.467841: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.467882: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.467911: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.468036: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.468267: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.468388: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.468427: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.468476: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.468526: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.468723: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.468737: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.510596: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+1/1 [==============================] - 9s 9s/step - loss: inf - accuracy: 0.0000e+00 - val_loss: inf - val_accuracy: 0.0000e+00
+Epoch 2/100
+2021-10-14 05:22:44.622235: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.622277: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.622401: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:44.622617: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+1/1 [==============================] - ETA: 0s - loss: inf - accuracy: 0.0000e+002021-10-14 05:22:45.075456: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075495: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075544: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075600: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075660: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075716: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075740: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075760: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075806: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075877: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.075995: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.076016: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.076178: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.076210: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234284: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234392: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234438: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234483: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234530: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234544: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234596: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234639: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234768: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234837: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234882: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234913: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234959: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.234991: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.235021: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.235153: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.235235: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.235299: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.391722: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.391763: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.391838: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.391867: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.391914: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.392013: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.392028: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.392276: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.545771: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.545837: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.545860: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.546005: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.546136: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.546205: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.546389: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.546450: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.546475: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.546489: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.546529: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.587576: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+1/1 [==============================] - 1s 1s/step - loss: inf - accuracy: 0.0000e+00 - val_loss: inf - val_accuracy: 0.0000e+00
+Epoch 3/100
+2021-10-14 05:22:45.698230: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.698437: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.698533: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:45.698647: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+1/1 [==============================] - ETA: 0s - loss: inf - accuracy: 0.0000e+002021-10-14 05:22:46.127968: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128016: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128060: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128121: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128177: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128236: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128244: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128368: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128391: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128524: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128631: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128675: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128696: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.128926: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290187: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290274: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290309: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290390: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290411: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290485: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290545: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290574: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290605: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290663: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290756: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290822: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290884: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290895: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.290993: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.291033: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.291057: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.291095: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.448088: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.448374: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.448476: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.448486: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.448636: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.448658: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.448730: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.448954: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.604924: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.604977: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.604992: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.605256: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.605280: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.605321: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.605429: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.605523: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.605583: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.605591: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.605646: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+2021-10-14 05:22:46.646805: W ./tensorflow/core/util/ctc/ctc_loss_calculator.h:499] No valid path found.
+1/1 [==============================] - 1s 1s/step - loss: inf - accuracy: 0.0000e+00 - val_loss: inf - val_accuracy: 0.0000e+00
+Restoring model weights from the end of the best epoch.
+Epoch 00003: early stopping

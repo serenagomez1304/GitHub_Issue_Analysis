@@ -1,0 +1,63 @@
+title:
+GPU not found on Tensorflow 1.4.1
+
+user:
+erwinerdem
+
+status:
+closed
+
+labels:
+comp:gpu
+stat:awaiting response
+subtype: ubuntu/linux
+type:build/install
+
+contributors:
+mihaimaruseac
+
+description:
+System information
+
+Linux Ubuntu 20.04
+tensorflow-gpu 1.4.1 pypi_0 pypi
+Python version: 2.7.15
+Installed using virtualenv? pip? conda?:
+CUDA/cuDNN version: CUDA version 8.0.61 with cuDNN version 6.0.21
+1x GTX 1080TI
+The problem
+I cannot run any scripts from GPU using tensorflow. When I run:
+
+import os
+import tensorflow as tf
+os.environ["CUDA_VISIBLE_DEVICES"]="0"
+print(tf.test.gpu_device_name())
+I get:
+
+2021-10-14 11:35:56.443831: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2021-10-14 11:35:57.277446: E tensorflow/stream_executor/cuda/cuda_driver.cc:406] failed call to cuInit: CUDA_ERROR_INVALID_DEVICE
+2021-10-14 11:35:57.277535: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:158] retrieving CUDA diagnostic information for host: erwin-SYS
+2021-10-14 11:35:57.277557: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:165] hostname: erwin-SYS
+2021-10-14 11:35:57.277638: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:189] libcuda reported version is: 470.74.0
+2021-10-14 11:35:57.277692: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:369] driver version file contents: """NVRM version: NVIDIA UNIX x86_64 Kernel Module  470.74  Mon Sep 13 23:09:15 UTC 2021
+GCC version:  gcc version 9.3.0 (Ubuntu 9.3.0-17ubuntu1~20.04)
+"""
+2021-10-14 11:35:57.277742: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:193] kernel reported version is: 470.74.0
+2021-10-14 11:35:57.277762: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:300] kernel version seems to match DSO: 470.74.0
+''
+
+Other info / logs
+When I run nvidia-smi it does find the gpu:
+
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 470.74       Driver Version: 470.74       CUDA Version: 11.4     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  NVIDIA GeForce ...  Off  | 00000000:02:00.0 Off |                  N/A |
+| 27%   26C    P8     6W / 180W |     14MiB /  8118MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+

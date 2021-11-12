@@ -1,0 +1,20 @@
+title:
+Use vector version of the logo in README file
+
+user:
+mahozad
+
+status:
+closed
+
+labels:
+2.6.0
+type:docs-bug
+
+contributors:
+mihaimaruseac
+
+description:
+Please replace the raster logo in the repository README.md file with its vector (SVG) alternative available in the brand assets.
+
+Also, I think the horizontal lockup is marked as the preferred one in the brand guidelines.

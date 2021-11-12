@@ -1,5 +1,5 @@
 import os
-import use_case1
+import cluster_related_issues
 import classify
 
 def use_case():
@@ -9,7 +9,7 @@ def use_case():
 
     from word2vec import Word2Vec
     wv = Word2Vec(w2v_model)
-    use_case1.use_case()
+    cluster_related_issues.use_case()
     new_issue = input("Enter path to issue: ")
     # checking if it is a file
     if os.path.isfile(new_issue):
@@ -35,23 +35,10 @@ def use_case():
     files = []
     for filename in os.listdir(directory):
         # print(filename)
-        if(km_labels[count] != prediction[0]):
+        if(km_labels[count] == prediction[0]):
             count += 1
+            file = filename.split('.')
+            files.append(file[0])
             continue
-        file = os.path.join(directory, filename)
-        # checking if it is a file
-        if os.path.isfile(file):
-            flag = False
-            with open(file, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('status:'):
-                        flag = True
-                        continue
-                    if(line.startswith('labels:') or len(line) == 0):
-                        flag = False 
-                    if(flag and line == 'open'):
-                        file = filename.split('.')
-                        files.append(file[0])
         count += 1
     print(files)

@@ -1,6 +1,7 @@
 import numpy as np
 import re
 
+import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 
@@ -34,7 +35,7 @@ class Word2Vec:
         for text in words:
             token_text = word_tokenize(text)
             list_tagged.append(nltk.pos_tag(token_text))
-        # word_vecs = []
+        word_vecs = []
         for data in list_tagged:
             word = data[0][0]
             tag = data[0][1]

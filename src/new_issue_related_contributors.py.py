@@ -1,5 +1,5 @@
 import os
-import use_case1
+import cluster_related_issues
 import classify
 
 def use_case():
@@ -9,7 +9,7 @@ def use_case():
 
     from word2vec import Word2Vec
     wv = Word2Vec(w2v_model)
-    use_case1.use_case()
+    cluster_related_issues.use_case()
     new_issue = input("Enter path to issue: ")
     # checking if it is a file
     if os.path.isfile(new_issue):

@@ -1,0 +1,171 @@
+title:
+keras.models.load_model resets the optimizer's state
+
+user:
+SiLiKhon
+
+status:
+closed
+
+labels:
+2.6.0
+comp:keras
+stat:awaiting response
+type:bug
+
+contributors:
+yongtang
+qlzh727
+
+description:
+Please make sure that this is a bug. As per our
+GitHub Policy,
+we only address code/doc bugs, performance issues, feature requests and
+build/installation issues on GitHub. tag:bug_template
+
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): yes, mostly based on the example from https://www.tensorflow.org/guide/keras/save_and_serialize
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): google colab (Linux 59a52e5448f6 5.4.104+ #1 SMP Sat Jun 5 09:50:34 PDT 2021 x86_64 x86_64 x86_64 GNU/Linux)
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device: no
+TensorFlow installed from (source or binary): google colab version
+TensorFlow version (use command below): v2.6.0-0-g919f693420e 2.6.0
+Python version: 3.7.12 (default, Sep 10 2021, 00:21:48) [GCC 7.5.0]
+Bazel version (if compiling from source): no
+GCC/Compiler version (if compiling from source): no
+CUDA/cuDNN version: 11.2
+GPU model and memory: Tesla K80, 11441MiB
+You can collect some of this information using our environment capture
+script
+You can also obtain the TensorFlow version with:
+
+TF 1.0: python -c "import tensorflow as tf; print(tf.GIT_VERSION, tf.VERSION)"
+TF 2.0: python -c "import tensorflow as tf; print(tf.version.GIT_VERSION, tf.version.VERSION)"
+Describe the current behavior
+
+When restoring a keras model with keras.models.load_model, the returned model's optimizer is in the reset state (e.g. its weights attribute is empty).
+
+Describe the expected behavior
+
+The original call:
+
+reconstructed_model = tf.keras.models.load_model("my_model")
+should have restored and kept the optimizer's weights.
+
+Contributing
+
+Do you want to contribute a PR? (yes/no): no
+Briefly describe your candidate solution(if contributing): -
+Standalone code to reproduce the issue
+
+import tensorflow as tf
+import numpy as np
+
+def get_model():
+    # Create a simple model.
+    inputs = tf.keras.Input(shape=(32,))
+    outputs = tf.keras.layers.Dense(1)(inputs)
+    model = tf.keras.Model(inputs, outputs)
+    model.compile(optimizer="adam", loss="mean_squared_error")
+    return model
+
+
+model = get_model()
+
+# Train the model.
+test_input = np.random.random((128, 32))
+test_target = np.random.random((128, 1))
+model.fit(test_input, test_target)
+
+# Calling `save('my_model')` creates a SavedModel folder `my_model`.
+model.save("my_model")
+
+# It can be used to reconstruct the model identically.
+reconstructed_model = tf.keras.models.load_model("my_model")
+
+print(reconstructed_model.optimizer.weights)
+output:
+
+4/4 [==============================] - 1s 4ms/step - loss: 0.1829
+INFO:tensorflow:Assets written to: my_model/assets
+[]
+
+If we additionally provide a compile=False argument, the optimizer's weights are restored:
+
+reconstructed_model = tf.keras.models.load_model("my_model", compile=False)
+for w in reconstructed_model.optimizer.weights:
+    print(w.shape)
+output:
+
+(32, 1)
+(1,)
+(32, 1)
+(1,)
+
+However, trying to use the restored optimizer fails with an exception:
+
+reconstructed_model.compile(reconstructed_model.optimizer, loss="mean_squared_error")
+reconstructed_model.fit(test_input, test_target)
+output:
+
+---------------------------------------------------------------------------
+NotImplementedError                       Traceback (most recent call last)
+<ipython-input-3-22a4ff24818b> in <module>()
+      1 reconstructed_model.compile(reconstructed_model.optimizer, loss="mean_squared_error")
+----> 2 reconstructed_model.fit(test_input, test_target)
+
+9 frames
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/func_graph.py in wrapper(*args, **kwargs)
+    992           except Exception as e:  # pylint:disable=broad-except
+    993             if hasattr(e, "ag_error_metadata"):
+--> 994               raise e.ag_error_metadata.to_exception(e)
+    995             else:
+    996               raise
+
+NotImplementedError: in user code:
+
+    /usr/local/lib/python3.7/dist-packages/keras/engine/training.py:853 train_function  *
+        return step_function(self, iterator)
+    /usr/local/lib/python3.7/dist-packages/keras/engine/training.py:842 step_function  **
+        outputs = model.distribute_strategy.run(run_step, args=(data,))
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:1286 run
+        return self._extended.call_for_each_replica(fn, args=args, kwargs=kwargs)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:2849 call_for_each_replica
+        return self._call_for_each_replica(fn, args, kwargs)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:3632 _call_for_each_replica
+        return fn(*args, **kwargs)
+    /usr/local/lib/python3.7/dist-packages/keras/engine/training.py:835 run_step  **
+        outputs = model.train_step(data)
+    /usr/local/lib/python3.7/dist-packages/keras/engine/training.py:791 train_step
+        self.optimizer.minimize(loss, self.trainable_variables, tape=tape)
+    /usr/local/lib/python3.7/dist-packages/keras/optimizer_v2/optimizer_v2.py:522 minimize
+        return self.apply_gradients(grads_and_vars, name=name)
+    /usr/local/lib/python3.7/dist-packages/keras/optimizer_v2/optimizer_v2.py:660 apply_gradients
+        apply_state)
+    /usr/local/lib/python3.7/dist-packages/keras/optimizer_v2/optimizer_v2.py:707 _distributed_apply
+        var, apply_grad_to_update_var, args=(grad,), group=False)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:2595 update
+        var, fn, args=args, kwargs=kwargs, group=group)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:2473 _replica_ctx_update
+        return replica_context.merge_call(merge_fn, args=args, kwargs=kwargs)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:3064 merge_call
+        return self._merge_call(merge_fn, args, kwargs)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:3071 _merge_call
+        return merge_fn(self._strategy, *args, **kwargs)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:2471 merge_fn  **
+        return self.update(var, fn, merged_args, merged_kwargs, group=group)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:2592 update
+        return self._update(var, fn, args, kwargs, group)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:3646 _update
+        return self._update_non_slot(var, fn, (var,) + tuple(args), kwargs, group)
+    /usr/local/lib/python3.7/dist-packages/tensorflow/python/distribute/distribute_lib.py:3652 _update_non_slot
+        result = fn(*args, **kwargs)
+    /usr/local/lib/python3.7/dist-packages/keras/optimizer_v2/optimizer_v2.py:689 apply_grad_to_update_var  **
+        update_op = self._resource_apply_dense(grad, var, **apply_kwargs)
+    /usr/local/lib/python3.7/dist-packages/keras/optimizer_v2/optimizer_v2.py:1241 _resource_apply_dense
+        raise NotImplementedError("Must be implemented in subclasses.")
+
+    NotImplementedError: Must be implemented in subclasses.
+Other info / logs Include any logs or source code that would be helpful to
+diagnose the problem. If including tracebacks, please include the full
+traceback. Large logs and files should be attached.

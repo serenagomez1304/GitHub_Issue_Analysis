@@ -1,0 +1,30 @@
+title:
+Performance of a model loading the same weights changes depending on the version of tensorflow
+
+user:
+napsta32
+
+status:
+closed
+
+labels:
+type:bug
+
+contributors:
+yongtang
+av8ramit
+jsimsa
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): Yes
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Ubuntu20.04 LTS
+TensorFlow installed from (source or binary): binary
+TensorFlow version (use command below): 2.4.3 & 2.6.0
+Python version: 3.6.13
+Describe the current behavior
+I received weights of 3 keras models (ResNet50V2, EfficientNetB0, and VGG16) that had been trained with a version of tensorflow 2.x (I don't know and can't find out). I do know the weights were created with the keras model checkpoint callback. I created a new venv and pip installed version 2.6.0 and loaded the weights and tested out the performance on the task. It was completely different to expected performance and terrible. It occurred for all three networks. I spent a while trying to trouble shoot and eventually thought I would try with an older version (2.4.3), and performance was as expected.
+
+Describe the expected behavior
+Performance should not be different for models loading the same weights under 2.4.3 and 2.6.0.

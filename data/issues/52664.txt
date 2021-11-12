@@ -7,6 +7,9 @@ g-sarapata
 status:
 open
 
+contributor:
+
+
 labels:
 stat:awaiting response
 subtype:bazel

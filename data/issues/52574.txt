@@ -7,6 +7,9 @@ leandro-gracia-gil
 status:
 open
 
+contributor:
+
+
 labels:
 2.6.0
 subtype:macOS

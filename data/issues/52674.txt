@@ -7,6 +7,9 @@ insung3511
 status:
 open
 
+contributor :
+yoangtan
+
 labels:
 stat:awaiting response
 subtype:macOS

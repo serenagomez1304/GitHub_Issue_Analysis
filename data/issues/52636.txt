@@ -1,0 +1,36 @@
+title:
+supporting "object" type in tensorflow dtype
+
+user:
+yogeesh-alphaics
+
+status:
+closed
+
+contributor:
+mdanatg
+hawkinsp
+
+labels:
+2.6.0
+comp:apis
+type:feature
+
+description:
+System information
+
+TensorFlow version (you are using): 2.6.0
+Are you willing to contribute it (Yes/No): yes
+Currently one can create tf. Variable , tf.TensorArray or tf.ragged.constant with dtype related to numbers repr (float, int) , well string too. But will it not be beneficial to allow the user to create these variables containing objects of custom class implemented in python. In NumPy, we can do this by stating the dtype = "object" but TensorFlow isn't compatible with dtype of NumPy. Given that the user handles this variable with proper caution, it gives more flexibility.
+
+Will this change the current api? How?
+Not very sure
+
+Who will benefit with this feature?
+Tensorflow is mainly used to create models to deal with problems involving complex mathematical calculations/approximation, but given the huge popularity of tf , while implementing some other components of the model (which can be done under numpy too) there might be a case where, some sub-components can be forced to be implemented in tf , involving custom python class objects, thus making it impossible to run, unless one removes the dependency of using those object altogether.
+One use case might be, as described in the below colab notebook , while calculating mAP metric, the postprocessing function is called via test_step function of tf.Keras.model.Model class. for abstraction purposes, I am returning a list of objects of the custom class (Bounding Box) which will be used later in the mAP class. Currently, I am able to return NumPy array of this list where dtype = "object" and while running in eager mode this is running, but while running in graph mode , defun function wants me to return only tensor objects and I cant do it as the list contains objects of a type not supported by tf.
+If someone is wondering why would you run post-processing in tf instead of NumPy, it becomes a necessity when this function is required to run metric calc in the validation step per epoch.
+
+Any Other info.
+please refer to this notebook, for a possible use case of the custom class object. This might seem totally unnecessary but yet on the other side provides really good abstraction and flexibility.
+https://colab.research.google.com/drive/1Ei2t9coPNEVrfmejzaRUDIs-tm05EZFD?usp=sharing

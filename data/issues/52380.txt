@@ -1,0 +1,145 @@
+title:
+Meshgrid does not work with tf.function
+
+user:
+aewhite
+
+status:
+closed
+MarkDaoust
+
+contributor:
+caisq
+
+
+labels:
+comp:keras
+TF 2.5
+type:bug
+
+description:
+The following code fails at runtime:
+
+import tensorflow as tf
+
+
+def f(x, y):
+    return tf.meshgrid(x, y)
+
+
+@tf.function
+def g(x, y):
+    return tf.meshgrid(x, y)
+
+
+def main():
+    print(f"tensorflow version: {tf.version.VERSION}")
+    all_values = tf.range(0.0, 1.0, .1)
+    x = y = tf.expand_dims(all_values, -1)
+
+    print(f(x, y))  # This works
+    print(g(x, y)) # This fails
+
+
+if __name__ == '__main__':
+    main()
+The output:
+
+2021-10-14 12:51:02.388948: I tensorflow/stream_executor/platform/default/dso_loader.cc:53] Successfully opened dynamic library libcudart.so.11.0
+2021-10-14 12:51:03.952753: I tensorflow/stream_executor/platform/default/dso_loader.cc:53] Successfully opened dynamic library libcuda.so.1
+2021-10-14 12:51:04.028174: E tensorflow/stream_executor/cuda/cuda_driver.cc:328] failed call to cuInit: CUDA_ERROR_NO_DEVICE: no CUDA-capable device is detected
+2021-10-14 12:51:04.028234: I tensorflow/stream_executor/cuda/cuda_diagnostics.cc:156] kernel driver does not appear to be running on this host (removed): /proc/driver/nvidia/version does not exist
+2021-10-14 12:51:04.028962: I tensorflow/core/platform/cpu_feature_guard.cc:142] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 AVX512F FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+tensorflow version: 2.5.1
+[<tf.Tensor: shape=(10, 10), dtype=float32, numpy=
+array([[0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ],
+       [0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ],
+       [0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ],
+       [0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ],
+       [0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ],
+       [0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ],
+       [0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ],
+       [0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ],
+       [0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ],
+       [0.        , 0.1       , 0.2       , 0.3       , 0.4       ,
+        0.5       , 0.6       , 0.70000005, 0.8000001 , 0.9000001 ]],
+      dtype=float32)>, <tf.Tensor: shape=(10, 10), dtype=float32, numpy=
+array([[0.        , 0.        , 0.        , 0.        , 0.        ,
+        0.        , 0.        , 0.        , 0.        , 0.        ],
+       [0.1       , 0.1       , 0.1       , 0.1       , 0.1       ,
+        0.1       , 0.1       , 0.1       , 0.1       , 0.1       ],
+       [0.2       , 0.2       , 0.2       , 0.2       , 0.2       ,
+        0.2       , 0.2       , 0.2       , 0.2       , 0.2       ],
+       [0.3       , 0.3       , 0.3       , 0.3       , 0.3       ,
+        0.3       , 0.3       , 0.3       , 0.3       , 0.3       ],
+       [0.4       , 0.4       , 0.4       , 0.4       , 0.4       ,
+        0.4       , 0.4       , 0.4       , 0.4       , 0.4       ],
+       [0.5       , 0.5       , 0.5       , 0.5       , 0.5       ,
+        0.5       , 0.5       , 0.5       , 0.5       , 0.5       ],
+       [0.6       , 0.6       , 0.6       , 0.6       , 0.6       ,
+        0.6       , 0.6       , 0.6       , 0.6       , 0.6       ],
+       [0.70000005, 0.70000005, 0.70000005, 0.70000005, 0.70000005,
+        0.70000005, 0.70000005, 0.70000005, 0.70000005, 0.70000005],
+       [0.8000001 , 0.8000001 , 0.8000001 , 0.8000001 , 0.8000001 ,
+        0.8000001 , 0.8000001 , 0.8000001 , 0.8000001 , 0.8000001 ],
+       [0.9000001 , 0.9000001 , 0.9000001 , 0.9000001 , 0.9000001 ,
+        0.9000001 , 0.9000001 , 0.9000001 , 0.9000001 , 0.9000001 ]],
+      dtype=float32)>]
+Traceback (most recent call last):
+  File "/mnt/workspace/tmp/pycharm_project_951/python_gamma/meshgrid_bug.py", line 23, in <module>
+    main()
+  File "/mnt/workspace/tmp/pycharm_project_951/python_gamma/meshgrid_bug.py", line 19, in main
+    print(g(x, y))
+  File "/usr/local/lib64/python3.7/site-packages/tensorflow/python/eager/def_function.py", line 889, in __call__
+    result = self._call(*args, **kwds)
+  File "/usr/local/lib64/python3.7/site-packages/tensorflow/python/eager/def_function.py", line 933, in _call
+    self._initialize(args, kwds, add_initializers_to=initializers)
+  File "/usr/local/lib64/python3.7/site-packages/tensorflow/python/eager/def_function.py", line 764, in _initialize
+    *args, **kwds))
+  File "/usr/local/lib64/python3.7/site-packages/tensorflow/python/eager/function.py", line 3050, in _get_concrete_function_internal_garbage_collected
+    graph_function, _ = self._maybe_define_function(args, kwargs)
+  File "/usr/local/lib64/python3.7/site-packages/tensorflow/python/eager/function.py", line 3444, in _maybe_define_function
+    graph_function = self._create_graph_function(args, kwargs)
+  File "/usr/local/lib64/python3.7/site-packages/tensorflow/python/eager/function.py", line 3289, in _create_graph_function
+    capture_by_value=self._capture_by_value),
+  File "/usr/local/lib64/python3.7/site-packages/tensorflow/python/framework/func_graph.py", line 999, in func_graph_from_py_func
+    func_outputs = python_func(*func_args, **func_kwargs)
+  File "/usr/local/lib64/python3.7/site-packages/tensorflow/python/eager/def_function.py", line 672, in wrapped_fn
+    out = weak_wrapped_fn().__wrapped__(*args, **kwds)
+  File "/usr/local/lib64/python3.7/site-packages/tensorflow/python/framework/func_graph.py", line 986, in wrapper
+    raise e.ag_error_metadata.to_exception(e)
+NotImplementedError: in user code:
+
+    /mnt/workspace/tmp/pycharm_project_951/python_gamma/meshgrid_bug.py:11 g  *
+        return tf.meshgrid(x, y)
+    /usr/local/lib64/python3.7/site-packages/tensorflow/python/util/dispatch.py:206 wrapper  **
+        return target(*args, **kwargs)
+    /usr/local/lib64/python3.7/site-packages/tensorflow/python/ops/array_ops.py:3644 meshgrid
+        mult_fact = ones(shapes, output_dtype)
+    /usr/local/lib64/python3.7/site-packages/tensorflow/python/util/dispatch.py:206 wrapper
+        return target(*args, **kwargs)
+    /usr/local/lib64/python3.7/site-packages/tensorflow/python/ops/array_ops.py:3212 ones
+        output = _constant_if_small(one, shape, dtype, name)
+    /usr/local/lib64/python3.7/site-packages/tensorflow/python/ops/array_ops.py:2896 _constant_if_small
+        if np.prod(shape) < 1000:
+    <__array_function__ internals>:6 prod
+        
+    /mnt/workspace/python/numpy/core/fromnumeric.py:3052 prod
+        keepdims=keepdims, initial=initial, where=where)
+    /mnt/workspace/python/numpy/core/fromnumeric.py:86 _wrapreduction
+        return ufunc.reduce(obj, axis, dtype, out, **passkwargs)
+    /usr/local/lib64/python3.7/site-packages/tensorflow/python/framework/ops.py:870 __array__
+        " a NumPy call, which is not supported".format(self.name))
+
+    NotImplementedError: Cannot convert a symbolic Tensor (meshgrid/Size_1:0) to a numpy array. This error may indicate that you're trying to pass a Tensor to a NumPy call, which is not supported
+This is running the AWS DLAMI for TF 2.5.1 using the following AMI: ami-09ddcd88a97c092e5. The EC2 instance type is a t3.small.

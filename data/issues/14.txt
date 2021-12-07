@@ -1,0 +1,18 @@
+title:
+g3doc format
+
+user:
+kmatzen
+
+status:
+closed
+
+contributor:
+vrv
+hawkinsp
+
+labels:
+type:docs-bug
+
+description:
+Has the g3doc specification been publicly released? Is an effort going to be made so that outside contributors know exactly how comments should be written in order to be correctly parsed?

@@ -1,0 +1,149 @@
+title:
+Mixed precision training incompatible with BinaryCrossentropy label smoothing
+
+user:
+ghup1
+
+status:
+closed
+
+contributor:
+
+
+labels:
+2.6.0
+comp:keras
+stat:awaiting response
+type:bug
+
+description:
+System information
+Have I written custom code (as opposed to using a stock example script
+provided in TensorFlow): Yes
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Windows Server 2012 R2
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue
+happens on a mobile device: -
+TensorFlow installed from (source or binary): binary
+TensorFlow version (use command below): v2.6.0-rc2-32-g919f693420e 2.6.0
+Python version: 3.9.6
+Bazel version (if compiling from source): -
+GCC/Compiler version (if compiling from source): -
+CUDA/cuDNN version: 11.2.2 / 8.1
+GPU model and memory: NVIDIA Titan X (Pascal), 12288 MiB
+Exact command to reproduce: see example below
+Describe the problem
+Reporting a possible bug. When setting float16 mixed precision policy and using label smoothing in BinaryCrossentropy, training returns a TypeError. Turning off either the mixed precision policy or label smoothing gives no errors. Passing a float16 to the label_smoothing argument does not help.
+
+Source code / logs
+Reproducible example
+
+import tensorflow as tf
+import numpy as np
+
+# Set mixed precision policy
+tf.keras.mixed_precision.set_global_policy('mixed_float16')
+
+# Create some random data
+inputs  = tf.random.normal((64, 256, 256, 1))
+targets = tf.constant(np.random.choice(
+    a       = [0, 1],
+    size    = (64, 256, 256, 1),
+    replace = True
+))
+
+# Create simple model
+model = tf.keras.Sequential([
+    tf.keras.Input(shape=(256, 256, 1)),
+    tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='relu')
+])
+
+model.compile(
+    optimizer = 'adam',
+    loss      = tf.keras.losses.BinaryCrossentropy(label_smoothing=0.1)
+)
+
+# Train model
+model.fit(inputs, targets, batch_size=8)
+Traceback
+
+Traceback (most recent call last):
+
+  File "G:\[redacted]\src\debug1.py", line 36, in <module>
+    model.fit(inputs, targets, batch_size=8)
+
+  File "F:\conda_env\[redacted]\lib\site-packages\keras\engine\training.py", line 1184, in fit
+    tmp_logs = self.train_function(iterator)
+
+  File "F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\eager\def_function.py", line 885, in __call__
+    result = self._call(*args, **kwds)
+
+  File "F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\eager\def_function.py", line 933, in _call
+    self._initialize(args, kwds, add_initializers_to=initializers)
+
+  File "F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\eager\def_function.py", line 759, in _initialize
+    self._stateful_fn._get_concrete_function_internal_garbage_collected(  # pylint: disable=protected-access
+
+  File "F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\eager\function.py", line 3066, in _get_concrete_function_internal_garbage_collected
+    graph_function, _ = self._maybe_define_function(args, kwargs)
+
+  File "F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\eager\function.py", line 3463, in _maybe_define_function
+    graph_function = self._create_graph_function(args, kwargs)
+
+  File "F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\eager\function.py", line 3298, in _create_graph_function
+    func_graph_module.func_graph_from_py_func(
+
+  File "F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\framework\func_graph.py", line 1007, in func_graph_from_py_func
+    func_outputs = python_func(*func_args, **func_kwargs)
+
+  File "F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\eager\def_function.py", line 668, in wrapped_fn
+    out = weak_wrapped_fn().__wrapped__(*args, **kwds)
+
+  File "F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\framework\func_graph.py", line 994, in wrapper
+    raise e.ag_error_metadata.to_exception(e)
+
+TypeError: in user code:
+
+    F:\conda_env\[redacted]\lib\site-packages\keras\engine\training.py:853 train_function  *
+        return step_function(self, iterator)
+    F:\conda_env\[redacted]\lib\site-packages\keras\engine\training.py:842 step_function  **
+        outputs = model.distribute_strategy.run(run_step, args=(data,))
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\distribute\distribute_lib.py:1286 run
+        return self._extended.call_for_each_replica(fn, args=args, kwargs=kwargs)
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\distribute\distribute_lib.py:2849 call_for_each_replica
+        return self._call_for_each_replica(fn, args, kwargs)
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\distribute\distribute_lib.py:3632 _call_for_each_replica
+        return fn(*args, **kwargs)
+    F:\conda_env\[redacted]\lib\site-packages\keras\engine\training.py:835 run_step  **
+        outputs = model.train_step(data)
+    F:\conda_env\[redacted]\lib\site-packages\keras\engine\training.py:788 train_step
+        loss = self.compiled_loss(
+    F:\conda_env\[redacted]\lib\site-packages\keras\engine\compile_utils.py:201 __call__
+        loss_value = loss_obj(y_t, y_p, sample_weight=sw)
+    F:\conda_env\[redacted]\lib\site-packages\keras\losses.py:141 __call__
+        losses = call_fn(y_true, y_pred)
+    F:\conda_env\[redacted]\lib\site-packages\keras\losses.py:245 call  **
+        return ag_fn(y_true, y_pred, **self._fn_kwargs)
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\util\dispatch.py:206 wrapper
+        return target(*args, **kwargs)
+    F:\conda_env\[redacted]\lib\site-packages\keras\losses.py:1805 binary_crossentropy
+        y_true = tf.__internal__.smart_cond.smart_cond(label_smoothing, _smooth_labels,
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\framework\smart_cond.py:56 smart_cond
+        return true_fn()
+    F:\conda_env\[redacted]\lib\site-packages\keras\losses.py:1803 _smooth_labels
+        return y_true * (1.0 - label_smoothing) + 0.5 * label_smoothing
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\ops\math_ops.py:1383 binary_op_wrapper
+        raise e
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\ops\math_ops.py:1367 binary_op_wrapper
+        return func(x, y, name=name)
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\ops\math_ops.py:1710 _mul_dispatch
+        return multiply(x, y, name=name)
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\util\dispatch.py:206 wrapper
+        return target(*args, **kwargs)
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\ops\math_ops.py:530 multiply
+        return gen_math_ops.mul(x, y, name)
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\ops\gen_math_ops.py:6244 mul
+        _, _, _op, _outputs = _op_def_library._apply_op_helper(
+    F:\conda_env\[redacted]\lib\site-packages\tensorflow\python\framework\op_def_library.py:555 _apply_op_helper
+        raise TypeError(
+
+    TypeError: Input 'y' of 'Mul' Op has type float32 that does not match type float16 of argument 'x'.

@@ -1,0 +1,41 @@
+title:
+Error occurs during quantization usingTFLiteConvert.
+
+user:
+jooho-enerzai
+
+status:
+closed
+
+contributor:
+advaitjain
+qlzh727
+av8ramit
+
+labels:
+2.6.0
+Fixed in Nightly
+TFLiteConverter
+type:bug
+
+description:
+1. System information
+Linux Ubunut 20.04
+pip install tensorflow==2.6.0
+pip install tensorflow_model_optimization==0.7.0
+2. Code
+https://colab.research.google.com/drive/1kOgZevD3dkM0hxehTh8vNOW_1zXW4VDE?usp=sharing
+
+3. Failure after conversion
+error: 'tfl.max_pool_2d' op quantization parameters violate the same scale constraint: !quant.uniform<i8:f32, 0.010792325524722828> vs. !quant.uniform<i8:f32, 0.0039215686274509803:-128>
+(failure on converting)
+
+5. (optional) Any other info / logs
+I build two very similar models, but one is successfully converted to quantized model, while other is failed.
+Same with avgpool instead of maxpool
+
+There was a similar issue #46754 (#46754),
+
+but I think concat isn't problem because one of my model including concat works.
+
+Thank you

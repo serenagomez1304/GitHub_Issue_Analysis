@@ -1,0 +1,17 @@
+title:
+JVM, .NET Language Support
+
+user:
+sirinath 
+
+status:
+closed
+
+contributor:
+
+
+labels:
+stat:contributions welcome
+
+description:
+Your website says "... contribute SWIG interfaces to your favorite language ...". It will be good if yo have pure implementations in other languages like JVM and .NET without having to use SWIG.

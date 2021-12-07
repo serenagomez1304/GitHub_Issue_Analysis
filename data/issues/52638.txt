@@ -1,0 +1,40 @@
+title:
+ValueError: Converting a list of object of custom class (ExtensionType) to tensor error
+
+user:
+yogeesh-alphaics
+
+status:
+closed
+
+contributor:
+akuegel
+yongtang
+
+labels:
+comp:ops
+type:bug
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow):yes
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04):linux ubuntu 20.04
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device:no
+TensorFlow installed from (source or binary):binary
+TensorFlow version (use command below):2.8.0-dev20211023
+Python version:3.8.10
+Bazel version (if compiling from source):no
+GCC/Compiler version (if compiling from source):no
+CUDA/cuDNN version: nil
+GPU model and memory: nil
+i have implemented a simple class in python extending from tf.exerimental.ExtensionType which stores three tensors into it. My goal is to create a list of these objects which then can be returned from a function after converting this list into tensor.
+I have tried creating a tf.Variable object , tf.TensorArray object , tf.constant obect , passed numpy object of this list into these function too but getting an error that i cannot convert to tensor or "classname" is not identified as proper tf.Dtype.
+
+Standalone code to reproduce the issue
+https://colab.research.google.com/drive/1nea-BQ6nRsbiAAKFMnmeKSeqAeHiq563?usp=sharing
+
+Other info / logs Include any logs or source code that would be helpful to
+ValueError: Attempt to convert a value (Array(values=<tf.Tensor: shape=(5,), dtype=int32, numpy=array([1, 2, 3, 4, 5], dtype=int32)>, matched=<tf.Tensor: shape=(), dtype=bool, numpy=True>, iou=<tf.Tensor: shape=(), dtype=float32, numpy=53.46>)) with an unsupported type (<class '__main__.Array'>) to a Tensor.
+
+

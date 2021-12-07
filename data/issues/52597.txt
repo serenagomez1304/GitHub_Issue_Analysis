@@ -1,0 +1,65 @@
+title:
+Simple SSD, face detector, training ok with GradientTape BUT loss doesn't decrease if I train an identical model with Model.fit()
+
+user:
+qspi
+
+status:
+closed
+
+contributor:
+
+
+labels:
+2.6.0
+comp:keras
+stat:awaiting response
+type:performance
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): yes, custom
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Ubuntu 20.04, and also on current Google Colab
+TensorFlow installed from (source or binary): binary, GPU version
+TensorFlow version (use command below): 2.5.1 (2.6 on Google Colab)
+Python version: 3.7
+CUDA/cuDNN version: 11.4, 8.2
+GPU model and memory: Geforce RTX 2080 Ti
+Describe the current behavior
+
+Hi, I found a really interesting bug when I was building a simple SSD model to find faces on images.
+
+I have a simple, ResNet-like model, containing only convolutions and max pooling layers. I use the "Faces in the Wild" dataset from UMass. When I create a model and train it with using GradientTape it learns quickly, and after just 20 epochs it predicts very well face bounding boxes, and validation loss goes below 0.6. On the other hand, if I create the exactly the same model, use the same Adam optimizer, but I train the Model with Model.fit(), it just learns nothing. The validation loss starts from 1.8 and doesn't decrease at all.
+
+I found the issue first on my machine running Tensorflow 2.5.1, but I can reproduce the exactly same behaviour on Google Colab as well, currently running 2.6.0.
+
+Describe the expected behavior
+
+The Model.fit() and the simple GradientTape training should work identical, both trained model should learn and predict similarly.
+
+Standalone code to reproduce the issue
+
+Please check out the code here in Google Colab:
+https://colab.research.google.com/drive/1LvahE1CBuvvxAi7PT0gqcSrFYPDBEJmY?usp=sharing
+
+Other info / logs
+
+Please check out the ends of the verbose outputs of training loops:
+
+Model.fit() version output:
+[...]
+Epoch 18/20
+80/80 [==============================] - 9s 111ms/step - loss: 1.6102 - val_loss: 1.6888
+Epoch 19/20
+80/80 [==============================] - 9s 111ms/step - loss: 1.6102 - val_loss: 1.6888
+Epoch 20/20
+80/80 [==============================] - 9s 112ms/step - loss: 1.6102 - val_loss: 1.6888
+
+GradientTape version output:
+[...]
+epoch: [18/20], Train: [loss: 0.4297], Test: [loss: 0.5801]
+epoch: [19/20], Train: [loss: 0.4001], Test: [loss: 0.5757]
+epoch: [20/20], Train: [loss: 0.3962], Test: [loss: 0.5701]
+
+Thanks for reading it, let me know what do you think.

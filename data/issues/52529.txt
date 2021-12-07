@@ -1,0 +1,29 @@
+title:
+How to decrease the learning rate every 10 epochs by a factor of 0.9?
+
+user:
+Nafees-060
+
+status:
+closed
+
+contributor:
+cheshire
+
+labels:
+comp:keras
+stat:awaiting response
+type:support
+
+description:
+I want to set the learning rate at 10^-3 with a decay every 10 epochs by a factor of 0.9. I am using the Adam optimizer in Tensorflow Keras. I have found this code in the official documentation:
+
+initial_learning_rate = 0.1
+
+lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate,
+    decay_steps=100000,
+    decay_rate=0.96,
+    staircase=True
+)
+I do not know what is this decay_steps=100000. Actually, I want to decrease my learning rate after 10 epochs. How can I do it?

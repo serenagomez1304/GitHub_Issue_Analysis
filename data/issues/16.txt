@@ -1,0 +1,19 @@
+title:
+iOS Support and Example
+
+user:
+cancan101
+
+status:
+closed
+
+contributor:
+alextp
+joker-eph
+
+labels:
+type:docs-bug
+type:feature
+
+description:
+Currently there is an example on Android but no corresponding IOS example even though the white paper calls out both Android and IOS.

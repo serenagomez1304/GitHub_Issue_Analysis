@@ -1,0 +1,65 @@
+title:
+Tensorflow serving in docker causes "Invalid reduction dimension (1 for input with 1 dimension(s)...
+
+user:
+mbkgh
+
+status:
+closed
+
+contributor:
+allenlavoie
+MarkDaoust
+
+labels:
+2.6.0
+comp:keras
+stat:awaiting response
+type:bug
+
+description:
+I am using tensorflow-serving which runs with the build-in examples well and without issues:
+cd c:\tmp\tfserving
+PS C:\tmp\tfserving> C:\programme\git\bin\git clone https://github.com/tensorflow/serving
+set-variable -Name "TESTDATA" -Value "$(pwd)/serving/tensorflow_serving/servables/tensorflow/testdata"
+docker run -t --rm -p 8501:8501 -v "$TESTDATA/saved_model_half_plus_two_cpu:/models/half_plus_two" -e MODEL_NAME=half_plus_two tensorflow/serving
+curl -d "{"instances": [1.0, 2.0, 5.0]}" -X POST http://localhost:8501/v1/models/half_plus_two:predict
+
+However, by trying to run the following model in a recent docker container it causes:
+"Invalid reduction dimension (1 for input with 1 dimension(s)\
+
+Steps to verify:
+I used the example code ...
+https://keras.io/examples/structured_data/structured_data_classification_from_scratch/
+and at the end saved the model
+model.save('my-model.tf')
+
+and put it into the serving directory where it was recognized:
+C:\tmp\tfserving\serving\tensorflow_serving\servables\tensorflow\testdata
+cd \tmp\tfserving
+set-variable -Name "TESTDATA" -Value "$(pwd)/serving/tensorflow_serving/servables/tensorflow/testdata"
+docker run -t --rm -p 8501:8501 -v "$TESTDATA/my_model:/models/my_model" -e MODEL_NAME=my_model tensorflow/serving
+
+curl http://localhost:8501/v1/models/my_model
+{ "model_version_status": [ { "version": "1", "state": "AVAILABLE", "status": { "error_code": "OK", [...]
+
+However, trying to run a prediction
+
+curl -d "{ "instances": [ {"age": 50,"sex": 1,"cp": 1,"trestbps": 145,"chol": 133,"fbs": 1,"restecg": 2,"thalach": 150,"exang": 0,"oldpeak": 2.3,"slope": 3,"ca": 0,"thal": "fixed" } ]}" -X POST http://localhost:8501/v1/models/my_model:predict
+
+... returns:
+
+"error": "Invalid reduction dimension (1 for input with 1 dimension(s)\n\t [[{{node model/integer_lookup_5/bincount/Max}}]]"
+
+System information
+
+Running on Windows with no GPU-Support. No further changes were made on the example code
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Windows 10
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device: n.a.
+TensorFlow installed from (source or binary): binary
+TensorFlow version (use command below): v2.6.0-rc2-32-g919f693420e 2.6.0
+Python version: 3.8.11 (default, Aug 6 2021, 09:57:55) [MSC v.1916 64 bit (AMD64)]
+Bazel version (if compiling from source): have also tried to compile on linux with bazel but with the same result
+GCC/Compiler version (if compiling from source): n.a.
+CUDA/cuDNN version: n.a.
+GPU model and memory: n.a.

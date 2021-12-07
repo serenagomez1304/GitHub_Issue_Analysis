@@ -1,0 +1,18 @@
+title:
+Swift API
+
+user:
+janerivi
+
+status:
+closed
+
+contributor:
+gunan
+jsimsa
+
+labels:
+stat:contributions welcome
+
+description:
+Swift is a very popular and expressive language with a large community of pro developers.

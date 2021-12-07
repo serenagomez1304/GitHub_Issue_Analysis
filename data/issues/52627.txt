@@ -1,0 +1,182 @@
+title:
+TypeError: To be compatible with tf.eager.defun, Python functions must return zero or more Tensors;
+
+user:
+yogeesh-alphaics
+
+status:
+closed
+
+contributor:
+smit-hinsu
+benoitsteiner
+
+labels:
+2.6.0
+comp:tf.function
+type:bug
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): yes
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): linux ubuntu 20.04
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device: no
+TensorFlow installed from (source or binary): binary
+TensorFlow version (use command below): 2.6.0
+Python version: 3.8.10
+Bazel version (if compiling from source): no
+GCC/Compiler version (if compiling from source): no
+CUDA/cuDNN version: cuda_11.2
+GPU model and memory: nvidia geforce rtx 2060 / 6gb
+I am implementing a function which is calld by tf.keras model.fit function while running the validation dataset after every epoch, hence the fucntion will be runnig in graph mode. The problem is when i am reurning parameters from this function . I am getting a typeerror stating that 'i should return 0 or more tensors' , whereas currently I am returning a list.
+*Since the list contains numpy array and each np array is collection of custom class in python. I have tried converting this numpy array in tensor variable , tensorarray (dtype is a problem ) to no avail . Hence i am unable to figure out how should i return the Box objects in form of tensor.
+*As this function is running in eager mode prefectly fine , i am wondering is it a strict signature constraint to return tensors and not even numpy array from a function decorated under tf.fucntion decorator.
+
+Standalone code to reproduce the issue
+https://colab.research.google.com/drive/1Ei2t9coPNEVrfmejzaRUDIs-tm05EZFD?usp=sharing
+
+Other info / logs Include any logs or source code that would be helpful to
+
+TypeError                                 Traceback (most recent call last)
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/func_graph.py in convert(x)
+    962         try:
+--> 963           x = ops.convert_to_tensor_or_composite(x)
+    964         except (ValueError, TypeError):
+
+20 frames
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/ops.py in convert_to_tensor_or_composite(value, dtype, name)
+   1688   return internal_convert_to_tensor_or_composite(
+-> 1689       value=value, dtype=dtype, name=name, as_ref=False)
+   1690 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/ops.py in internal_convert_to_tensor_or_composite(value, dtype, name, as_ref)
+   1727         as_ref=as_ref,
+-> 1728         accepted_result_types=(Tensor, composite_tensor.CompositeTensor))
+   1729 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/profiler/trace.py in wrapped(*args, **kwargs)
+    162           return func(*args, **kwargs)
+--> 163       return func(*args, **kwargs)
+    164 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/ops.py in convert_to_tensor(value, dtype, name, as_ref, preferred_dtype, dtype_hint, ctx, accepted_result_types)
+   1565     if ret is None:
+-> 1566       ret = conversion_func(value, dtype=dtype, name=name, as_ref=as_ref)
+   1567 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/tensor_conversion_registry.py in _default_conversion_function(***failed resolving arguments***)
+     51   del as_ref  # Unused.
+---> 52   return constant_op.constant(value, dtype, name=name)
+     53 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/constant_op.py in constant(value, dtype, shape, name)
+    271   return _constant_impl(value, dtype, shape, name, verify_shape=False,
+--> 272                         allow_broadcast=True)
+    273 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/constant_op.py in _constant_impl(value, dtype, shape, name, verify_shape, allow_broadcast)
+    289           value, dtype=dtype, shape=shape, verify_shape=verify_shape,
+--> 290           allow_broadcast=allow_broadcast))
+    291   dtype_value = attr_value_pb2.AttrValue(type=tensor_value.tensor.dtype)
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/tensor_util.py in make_tensor_proto(values, dtype, shape, verify_shape, allow_broadcast)
+    563         "Element type not supported in TensorProto: %s" % numpy_dtype.name)
+--> 564   append_fn(tensor_proto, proto_values)
+    565 
+
+tensorflow/python/framework/fast_tensor_util.pyx in tensorflow.python.framework.fast_tensor_util.AppendObjectArrayToTensorProto()
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/util/compat.py in as_bytes(bytes_or_text, encoding)
+     86     raise TypeError('Expected binary or unicode string, got %r' %
+---> 87                     (bytes_or_text,))
+     88 
+
+TypeError: Expected binary or unicode string, got <__main__.BoundingBox object at 0x7f3f3b798a50>
+
+During handling of the above exception, another exception occurred:
+
+TypeError                                 Traceback (most recent call last)
+<ipython-input-119-e9ab93aab472> in <module>()
+     29 
+     30 if __name__ == "__main__":
+---> 31     test_postprocess()
+
+<ipython-input-119-e9ab93aab472> in test_postprocess()
+     24         batch_labels = [np.random.uniform(0,1 , size = [1,13,13,3,7]).astype(np.float32) , np.random.uniform(0,1 , size = [1,26,26,3,7]).astype(np.float32) , np.random.uniform(0,1 , size = [1,52,52,3,7]).astype(np.float32)]
+     25         # box_objects = post_process(batch_labels , anchors)
+---> 26         box_objects = post_process(batch_labels , anchors)
+     27         # print(box_objects)
+     28 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/eager/def_function.py in __call__(self, *args, **kwds)
+    883 
+    884       with OptionalXlaContext(self._jit_compile):
+--> 885         result = self._call(*args, **kwds)
+    886 
+    887       new_tracing_count = self.experimental_get_tracing_count()
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/eager/def_function.py in _call(self, *args, **kwds)
+    931       # This is the first call of __call__, so we have to initialize.
+    932       initializers = []
+--> 933       self._initialize(args, kwds, add_initializers_to=initializers)
+    934     finally:
+    935       # At this point we know that the initialization is complete (or less
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/eager/def_function.py in _initialize(self, args, kwds, add_initializers_to)
+    758     self._concrete_stateful_fn = (
+    759         self._stateful_fn._get_concrete_function_internal_garbage_collected(  # pylint: disable=protected-access
+--> 760             *args, **kwds))
+    761 
+    762     def invalid_creator_scope(*unused_args, **unused_kwds):
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/eager/function.py in _get_concrete_function_internal_garbage_collected(self, *args, **kwargs)
+   3064       args, kwargs = None, None
+   3065     with self._lock:
+-> 3066       graph_function, _ = self._maybe_define_function(args, kwargs)
+   3067     return graph_function
+   3068 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/eager/function.py in _maybe_define_function(self, args, kwargs)
+   3461 
+   3462           self._function_cache.missed.add(call_context_key)
+-> 3463           graph_function = self._create_graph_function(args, kwargs)
+   3464           self._function_cache.primary[cache_key] = graph_function
+   3465 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/eager/function.py in _create_graph_function(self, args, kwargs, override_flat_arg_shapes)
+   3306             arg_names=arg_names,
+   3307             override_flat_arg_shapes=override_flat_arg_shapes,
+-> 3308             capture_by_value=self._capture_by_value),
+   3309         self._function_attributes,
+   3310         function_spec=self.function_spec,
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/func_graph.py in func_graph_from_py_func(name, python_func, args, kwargs, signature, func_graph, autograph, autograph_options, add_control_dependencies, arg_names, op_return_value, collections, capture_by_value, override_flat_arg_shapes, acd_record_initial_resource_uses)
+   1010       # TensorArrays and `None`s.
+   1011       func_outputs = nest.map_structure(convert, func_outputs,
+-> 1012                                         expand_composites=True)
+   1013 
+   1014       check_mutation(func_args_before, func_args, original_func)
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/util/nest.py in map_structure(func, *structure, **kwargs)
+    867 
+    868   return pack_sequence_as(
+--> 869       structure[0], [func(*x) for x in entries],
+    870       expand_composites=expand_composites)
+    871 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/util/nest.py in <listcomp>(.0)
+    867 
+    868   return pack_sequence_as(
+--> 869       structure[0], [func(*x) for x in entries],
+    870       expand_composites=expand_composites)
+    871 
+
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/func_graph.py in convert(x)
+    967               "must return zero or more Tensors; in compilation of %s, found "
+    968               "return value of type %s, which is not a Tensor." %
+--> 969               (str(python_func), type(x)))
+    970       if add_control_dependencies:
+    971         x = deps_ctx.mark_as_return(x)
+
+TypeError: To be compatible with tf.eager.defun, Python functions must return zero or more Tensors; in compilation of <function post_process at 0x7f3f368f9b00>, found return value of type <class 'numpy.ndarray'>, which is not a Tensor.

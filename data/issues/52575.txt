@@ -1,0 +1,80 @@
+title:
+TF estimator train_and_evaluate: loss = None and model does not train
+
+user:
+timmy-ops
+
+status:
+closed
+
+contributor:
+benoitsteiner
+caisq
+
+labels:
+comp:ops
+stat:awaiting response
+TF 1.15
+type:bug
+
+description:
+Hi guys, I am working on a premade estimator model of tensorflow (DNNRegressor) in an old tensorflow version. I already found some similar issues but their solution didnt work out for me (they said it would be solved by setting max_steps to None).
+
+TF version: 1.15.1
+
+train_spec = tf.estimator.TrainSpec(
+    input_fn=lambda: read_train(data_folder, params),
+    max_steps=None)
+max_steps was 1400000 before and i tried now to set it to None, but it didnt work for me. My input pipeline looks like this:
+
+clvf = CLVFeatures(ignore_crosses=True)
+
+def parse_csv(csv_row):
+  columns = tf.decode_csv(csv_row, record_defaults = clvf.get_all_defaults())
+  features = dict(zip(clvf.get_all_names(), columns))
+  
+  for column_name in clvf.get_unused():
+    features.pop(column_name)
+
+  target = features.pop(clvf.get_target_name())
+
+  return features, target
+
+#@tf.function
+def dataset_input_fn(data_folder, prefix=None, mode=None, params=None, count=None):
+  shuffle = True if mode == tf.estimator.ModeKeys.TRAIN else False
+
+  filenames = tf.matching_files('{}{}*.csv'.format(data_folder, prefix))
+  dataset = tf.data.TextLineDataset(filenames)#skip(1)
+  dataset = dataset.map(parse_csv)
+  if shuffle:
+    dataset = dataset.shuffle(buffer_size=params.buffer_size)
+  dataset = dataset.repeat(count=count)
+  dataset = dataset.batch(params.batch_size)
+
+  iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)#tf.compat.v1.data.make_one_shot_iterator(dataset)/#tf.compat.v1.data.make_initializable_iterator(dataset)
+  
+  features, target = iterator.get_next()
+
+  return features, target
+
+def read_train(data_folder, params):
+  return dataset_input_fn(
+      data_folder=data_folder,
+      prefix='train',
+      params=params,
+      mode=tf.estimator.ModeKeys.TRAIN)
+
+
+def read_eval(data_folder, params):
+  return dataset_input_fn(data_folder=data_folder,
+                          prefix='eval',
+                          params=params)
+
+
+def read_test(data_folder, params):
+  return dataset_input_fn(data_folder=data_folder,
+                          prefix='test',
+                          params=params,
+                          count=1)
+I would appreciate some help, so much. This is for school haha thank you!

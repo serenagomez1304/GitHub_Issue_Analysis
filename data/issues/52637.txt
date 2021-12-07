@@ -1,0 +1,51 @@
+title:
+Periodic delays of TF inference time in batch process
+
+user:
+mayantd
+
+status:
+closed
+
+contributor:
+smit-hinsu
+
+labels:
+2.6.0
+comp:keras
+stat:awaiting response
+type:performance
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): Yes
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Windows 10, Ubuntu 18.04
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device: --
+TensorFlow installed from (source or binary): Binary
+TensorFlow version (use command below): 2.2.0, 2.6.0
+Python version: 3.8
+Bazel version (if compiling from source):
+GCC/Compiler version (if compiling from source):
+CUDA/cuDNN version: 10.2, 11.2
+GPU model and memory: GTX 960M
+Describe the current behavior
+
+mytime = datetime.now().strftime("%m_%d_%Y_%H_%M_%S_%f")
+logFile.write(("Prediction Time Start          :{ptime}\n").format(ptime=mytime))
+
+prediction_cam1 = model.predict(my_image_arr_norm_expand)
+
+mytime = datetime.now().strftime("%m_%d_%Y_%H_%M_%S_%f")
+logFile.write(("Prediction Time End          :{ptime}\n").format(ptime=mytime))
+The graph below shows batch inference time of a group of images. X-Axis is image no and Y-axis is inference time in milliseconds. Average inference time 60-70 ms is OK for my project but these periodic delays which have inference time over 150 ms are not OK. At first I thought this may be related to program priority. So I changed its priority to real time priority in Windows 10(TF:2.2.0, CUDA:10.2) but it did not changed anything. There were still these periodic delays.
+
+Then I changed OS to Ubuntu where I can modify kernel. I repeated same steps as I did in Windows 10 first. My steps were :
+
+Take log of prediction code.
+Take log of prediction code with niceness value -20.
+Changed linux kernel to low latency version
+Take log of prediction code with priority 40.
+Take log of prediction code with priority 80(change multiple pid values which had same name like 'python inference.py')
+Force garbage collector at the end of each cycle with gc.collect().
+After all these steps periodic delays still exist.

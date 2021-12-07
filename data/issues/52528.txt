@@ -1,0 +1,55 @@
+title:
+Convolution with custom operation
+
+user:
+JivanRoquet
+
+status:
+closed
+
+contributor:
+tensorflower-gardener
+
+labels:
+comp:apis
+stat:awaiting response
+TF 2.3
+type:feature
+
+description:
+Please make sure that this is a feature request. As per our GitHub Policy, we only address code/doc bugs, performance issues, feature requests and build/installation issues on GitHub. tag:feature_template
+
+System information
+
+TensorFlow version (you are using): 2.3.4
+Are you willing to contribute it (Yes/No): Yes
+Describe the feature and the current behavior/state.
+
+Currently tf.nn.convolution seems to support only a convolution of the sum-product of the kernel applied to the input. Could this function (or another one with proper naming) support the declaration of a custom application function instead?
+
+Example: I'd like to convolve a pairwise distance function between the kernel and the input vector. If the part of the input vector currently convolved on is (example with a 1-d input vector):
+
+[10, 20, 30]
+And the kernel is:
+
+[9, 21, 30]
+Then the result of this step of the convolution would be the average of the element-wise distances between input and kernel:
+
+(abs(10-9) + abs(20-21) + abs(30-30)) / 3 = 0.6666
+Will this change the current api? How?
+
+It would likely need adding a new function like tf.nn.convolution_custom, or adding an optional argument to the existing tf.nn.convolution.
+
+Who will benefit with this feature?
+
+I can see a use when the network needs to learn about specific sequences or arrangements, when the element-wise values are not ordered. Example: letters. It doesn't make sense to convolve a sumproduct over an input vector if the letters are represented by numbers. However, with this feature, using the operation mentioned above as an example, the kernel could represent a sequence of letters e.g. [a, m, s] and it would return 0 if the current input window is also representing [a, m, s], or a positive float number otherwise.
+
+This would allow the network to spot sequences of letters such as, if again using the ams kernel (conceptually, and assuming a further 1 - distance operation applied to make an exact match a 1 and a non-match a 0):
+
+t    h    e      p    o    r    t       o    f       a    m    s    t    e    r    d    a    m
+     0    0      0    0    0    0       0    0       0    1    0    0    0    0    0    0
+After this, normal convolutions could be applied in order to learn patterns.
+
+I'm using letters as example here but I can imagine many other different applications where the sequence and its ordering matter, but the items are not ordered among themselves (e.g. categorical).
+
+Any Other info.

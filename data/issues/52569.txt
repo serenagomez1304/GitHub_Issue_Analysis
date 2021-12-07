@@ -1,0 +1,37 @@
+title:
+AttributeError: 'Tensor' object has no attribute 'values' in TensorFlow version: 2.7.0-dev20210922
+
+user:
+maryamxasghari
+
+status:
+closed
+
+contributor:
+d0k
+qlzh727
+yongtang
+
+labels:
+comp:core
+stat:awaiting response
+type:others
+
+description:
+TensorFlow version: 2.7.0-dev20210922
+
+I was testing the code from : https://www.tensorflow.org/tutorials/customization/custom_training_walkthrough
+
+After this line:
+
+train_dataset = train_dataset.map(pack_features_vector)
+features, labels = next(iter(train_dataset))
+
+I got this error:
+
+AttributeError: in user code:
+
+File "<ipython-input-11-b2720b65aaf7>", line 3, in pack_features_vector  *
+    features = tf.stack(list(features.values()), axis=1)
+
+AttributeError: 'Tensor' object has no attribute 'values'

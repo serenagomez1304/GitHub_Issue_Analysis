@@ -1,0 +1,54 @@
+title:
+InaccessibleTensoreorrr: tensor not acessible here , present in another or code block
+
+user:
+yogeesh-alphaics
+
+status:
+closed
+
+contributor:
+joker-eph
+cheshire
+
+labels:
+2.6.0
+comp:ops
+stat:awaiting response
+type:bug
+
+description:
+System information
+
+Have I written custom code (as opposed to using a stock example script provided in TensorFlow): yes
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04): Linux ubuntu 20.04
+Mobile device (e.g. iPhone 8, Pixel 2, Samsung Galaxy) if the issue happens on mobile device: no
+TensorFlow installed from (source or binary): binary
+TensorFlow version (use command below): 2.6.0
+Python version: 3.8.10
+Bazel version (if compiling from source): no
+GCC/Compiler version (if compiling from source): no
+CUDA/cuDNN version: cuda_11.2
+GPU model and memory: nvidia geforce rtx 2060 / 6gb
+I have implemented a post processing function for object detction model , which will also be used in mAP calcuation using tf,keras custom metric class support. Though while running the scipt in eager mode gives no porblem whatsoever, but running the script in graph mode (by putting the main function in tf.function scope ), gives an InaccesibleTensorerror.
+
+Standalone code to reproduce the issue
+link to notebook : https://colab.research.google.com/drive/1Ei2t9coPNEVrfmejzaRUDIs-tm05EZFD?usp=sharing
+
+error
+InaccessibleTensorError: in user code:
+
+<ipython-input-30-c33ccae08316>:147 post_process  *
+    keep_index = [index for index in range(len(final_probs)) if final_probs[index] > filter_threshold]
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/ops/math_ops.py:1817 wrapper
+    return fn(x, y, *args, **kwargs)
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/ops/gen_math_ops.py:3962 greater
+    "Greater", x=x, y=y, name=name)
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/op_def_library.py:750 _apply_op_helper
+    attrs=attr_protos, op_def=op_def)
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/func_graph.py:597 _create_op_internal
+    inp = self.capture(inp)
+/usr/local/lib/python3.7/dist-packages/tensorflow/python/framework/func_graph.py:647 capture
+    % (tensor, tensor.graph, self))
+
+InaccessibleTensorError: The tensor 'Tensor("while/while_1/cond/strided_slice_5:0", shape=(), dtype=float32)' cannot be accessed here: it is defined in another function or code block. Use return values, explicit Python locals or TensorFlow collections to access it. Defined in: FuncGraph(name=while_while_1_cond_true_56189, id=140026056052816); accessed from: FuncGraph(name=while_body_55673, id=140026059019408).

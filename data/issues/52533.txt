@@ -1,0 +1,77 @@
+title:
+Failed to build python3 package
+
+user:
+StarOnTheSky
+
+status:
+closed
+
+contributor:
+
+
+labels:
+stat:awaiting response
+subtype:bazel
+subtype: ubuntu/linux
+type:build/install
+
+description:
+System information
+
+OS Platform and Distribution (e.g., Linux Ubuntu 16.04):Linux Ubuntu 21.10
+TensorFlow installed from (source or binary):source
+TensorFlow version:2.6.0
+Python version:3.9.7
+Bazel version (if compiling from source):3.7.2
+GCC/Compiler version (if compiling from source):GCC9
+CUDA/cuDNN version:11.0
+GPU model and memory:RTX2060 6GB
+Describe the problem
+
+Provide the exact sequence of commands / steps that you executed before running into the problem
+
+❯ bazel build //tensorflow/tools/pip_package:build_pip_package --config=opt --config=cuda --config=mkl
+Starting local Bazel server and connecting to it...
+WARNING: The following configs were expanded more than once: [cuda]. For repeatable flags, repeats are counted twice and may lead to unexpected behavior.
+INFO: Options provided by the client:
+  Inherited 'common' options: --isatty=1 --terminal_columns=86
+INFO: Reading rc options for 'build' from /home/zwq/workspace/tensorflow/.bazelrc:
+  Inherited 'common' options: --experimental_repo_remote_exec
+INFO: Reading rc options for 'build' from /home/zwq/workspace/tensorflow/.bazelrc:
+  'build' options: --define framework_shared_object=true --java_toolchain=@tf_toolchains//toolchains/java:tf_java_toolchain --host_java_toolchain=@tf_toolchains//toolchains/java:tf_java_toolchain --define=use_fast_cpp_protos=true --define=allow_oversize_protos=true --spawn_strategy=standalone -c opt --announce_rc --define=grpc_no_ares=true --noincompatible_remove_legacy_whole_archive --enable_platform_specific_config --define=with_xla_support=true --config=short_logs --config=v2 --define=no_aws_support=true --define=no_hdfs_support=true
+INFO: Reading rc options for 'build' from /home/zwq/workspace/tensorflow/.tf_configure.bazelrc:
+  'build' options: --action_env PYTHON_BIN_PATH=/usr/bin/python3 --action_env PYTHON_LIB_PATH=/usr/lib/python3/dist-packages --python_path=/usr/bin/python3 --action_env CUDA_TOOLKIT_PATH=/usr/local/cuda-11.0 --action_env TF_CUDA_COMPUTE_CAPABILITIES=7.5 --action_env GCC_HOST_COMPILER_PATH=/usr/bin/x86_64-linux-gnu-gcc-9 --config=cuda
+INFO: Found applicable config definition build:short_logs in file /home/zwq/workspace/tensorflow/.bazelrc: --output_filter=DONT_MATCH_ANYTHING
+INFO: Found applicable config definition build:v2 in file /home/zwq/workspace/tensorflow/.bazelrc: --define=tf_api_version=2 --action_env=TF2_BEHAVIOR=1
+INFO: Found applicable config definition build:cuda in file /home/zwq/workspace/tensorflow/.bazelrc: --repo_env TF_NEED_CUDA=1 --crosstool_top=@local_config_cuda//crosstool:toolchain --@local_config_cuda//:enable_cuda
+INFO: Found applicable config definition build:opt in file /home/zwq/workspace/tensorflow/.tf_configure.bazelrc: --copt=-Wno-sign-compare --host_copt=-Wno-sign-compare
+INFO: Found applicable config definition build:cuda in file /home/zwq/workspace/tensorflow/.bazelrc: --repo_env TF_NEED_CUDA=1 --crosstool_top=@local_config_cuda//crosstool:toolchain --@local_config_cuda//:enable_cuda
+INFO: Found applicable config definition build:mkl in file /home/zwq/workspace/tensorflow/.bazelrc: --define=build_with_mkl=true --define=enable_mkl=true --define=tensorflow_mkldnn_contraction_kernel=0 --define=build_with_openmp=true -c opt
+INFO: Found applicable config definition build:linux in file /home/zwq/workspace/tensorflow/.bazelrc: --copt=-w --host_copt=-w --define=PREFIX=/usr --define=LIBDIR=$(PREFIX)/lib --define=INCLUDEDIR=$(PREFIX)/include --define=PROTOBUF_INCLUDE_PATH=$(PREFIX)/include --cxxopt=-std=c++14 --host_cxxopt=-std=c++14 --config=dynamic_kernels --distinct_host_configuration=false
+INFO: Found applicable config definition build:dynamic_kernels in file /home/zwq/workspace/tensorflow/.bazelrc: --define=dynamic_loaded_kernels=true --copt=-DAUTOLOAD_DYNAMIC_KERNELS
+DEBUG: /home/zwq/.cache/bazel/_bazel_zwq/004cf1a57827e926c0c6bde2a3de4f2d/external/tf_runtime/third_party/cuda/dependencies.bzl:51:10: The following command will download NVIDIA proprietary software. By using the software you agree to comply with the terms of the license agreement that accompanies the software. If you do not agree to the terms of the license agreement, do not use the software.
+INFO: Analyzed target //tensorflow/tools/pip_package:build_pip_package (444 packages loaded, 29466 targets configured).
+INFO: Found 1 target...
+Target //tensorflow/tools/pip_package:build_pip_package up-to-date:
+  bazel-bin/tensorflow/tools/pip_package/build_pip_package
+INFO: Elapsed time: 24.994s, Critical Path: 8.73s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+❯ 
+❯  bazel-bin/tensorflow/tools/pip_package/build_pip_package pkg
+2021年 10月 17日 星期日 12:22:28 CST : === Preparing sources in dir: /tmp/tmp.FwVpMUz8nN
+~/workspace/tensorflow ~/workspace/tensorflow
+~/workspace/tensorflow
+~/workspace/tensorflow/bazel-bin/tensorflow/tools/pip_package/build_pip_package.runfiles/org_tensorflow ~/workspace/tensorflow
+~/workspace/tensorflow
+/tmp/tmp.FwVpMUz8nN/tensorflow/include ~/workspace/tensorflow
+~/workspace/tensorflow
+2021年 10月 17日 星期日 12:22:58 CST : === Building wheel
+usage: setup.py [global_opts] cmd1 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+   or: setup.py --help [cmd1 cmd2 ...]
+   or: setup.py --help-commands
+   or: setup.py cmd --help
+
+error: invalid command 'bdist_wheel'
+C++ Library has been compiled successfully.

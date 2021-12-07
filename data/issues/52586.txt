@@ -1,0 +1,75 @@
+title:
+ValueError ----> 1 cnn.fit(X_train, y_train, epochs=2)
+
+user:
+shajibul
+
+status:
+closed
+
+contributor:
+jsimsa
+joker-eph
+
+labels:
+2.6.0
+comp:keras
+stat:awaiting response
+type:support
+
+description:
+Code:
+cnn.fit(X_train, y_train, epochs=2)
+
+I got an error:
+ValueError Traceback (most recent call last)
+in ()
+----> 1 cnn.fit(X_train, y_train, epochs=2)
+
+My Code Link in colab:
+https://colab.research.google.com/drive/1dy-q0E8B7siaWNRhG9CVNWuw1NBIOTl2?usp=sharing
+
+Total Code:
+import tensorflow as tf
+from tensorflow.keras import datasets, layers, models
+import matplotlib.pyplot as plt
+import numpy as np
+
+(X_train, y_train), (X_test,y_test) = datasets.mnist.load_data()
+X_train.shape
+
+X_test.shape
+
+plt.figure(figsize=(15,2))
+plt.imshow(X_train[0])
+
+y_train[:10]
+y_train = y_train.reshape(-1,)
+y_train[:10]
+
+classes = ["five","zero","four","one","nine","two","one","three","one","four"]
+
+def plot_sample(X, y, index):
+plt.figure(figsize = (15,3))
+plt.imshow(X[index])
+plt.xlabel(classes[y[index]])
+
+X_train = X_train / 255.0
+X_test = X_test / 255.0
+
+cnn = models.Sequential([
+layers.Conv2D(filters=28, kernel_size=(3, 3), activation='relu',
+input_shape=(28, 28, 3)),
+layers.MaxPooling2D((2, 2)),
+layers.Conv2D(filters=56, kernel_size=(3, 3), activation='relu'),
+layers.MaxPooling2D((2, 2)),
+layers.Flatten(),
+layers.Dense(28, activation='relu'),
+layers.Dense(10, activation='softmax')
+])
+
+cnn.compile(optimizer='adam',
+loss='sparse_categorical_crossentropy',
+metrics=['accuracy'])
+############ Error in below code############
+cnn.fit(X_train, y_train, epochs=2)

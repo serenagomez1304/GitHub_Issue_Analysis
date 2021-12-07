@@ -1,0 +1,18 @@
+title:
+C# api
+
+user:
+janerivi
+
+status:
+closed
+
+contributor:
+sanjoy
+mrry
+
+labels:
+stat:community support
+
+description:
+C# is very popular and expressive language with a large community of pro developers.

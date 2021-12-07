@@ -45,10 +45,10 @@ def use_case():
             with open(file, 'r') as f:
                 for line in f:
                     line = line.strip()
-                    if line.startswith('contributors:'):
+                    if line.startswith('contributor:') or line.startswith('contributors:') or line.startswith('contributor :') :
                         flag = True
                         continue
-                    if(line.startswith('status:') or len(line) == 0):
+                    if(len(line) == 0):
                         flag = False 
                     if(flag):
                         contributors.append(line)

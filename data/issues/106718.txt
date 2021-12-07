@@ -1,0 +1,88 @@
+title:
+Suspicion: E2E Test GetReadySchedulableNodes blocks single node/tainted cluster nodes from passing e2e 
+
+user:
+jayunit100
+
+status:
+open
+
+contributor :
+yoangtan
+
+labels:
+kind/bug
+needs-triage
+sig/testing
+sig/windows
+
+description:
+What happened?
+I think this function, maybe needs to be aware of non blocking taints... esp for the "only a few nodes,and theyre all tainted" scenario..
+
+func GetReadySchedulableNodes(c clientset.Interface) (nodes *v1.NodeList, err error) {
+	nodes, err = checkWaitListSchedulableNodes(c)
+	if err != nil {
+		return nil, fmt.Errorf("listing schedulable nodes error: %s", err)
+	}
+	Filter(nodes, func(node v1.Node) bool {
+		// THIS SHOULD RETURN TRUE EVEN IF ONE NODE HAS TAINTS, 
+		// BECAUSE THE USER MAY BE PASSING IN non-blocking-taints !!!
+		return IsNodeSchedulable(&node) && isNodeUntainted(&node)
+while investigating this we should also look at this function, not sure we should be using spec.unschedulable anymore, because i think its deprecated?
+
+
+// waitListSchedulableNodes is a wrapper around listing nodes supporting retries.
+func waitListSchedulableNodes(c clientset.Interface) (*v1.NodeList, error) {
+	var nodes *v1.NodeList
+	var err error
+	if wait.PollImmediate(poll, singleCallTimeout, func() (bool, error) {
+		nodes, err = c.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{FieldSelector: fields.Set{
+			"spec.unschedulable": "false",
+MIGHT HAVE some funny logic in it that prevents SINGLE windows worker node clusters from passing e2e.
+
+Example
+Running
+
+./e2e.test --provider=local --kubeconfig=/home/kubo/.kube/config --dump-logs-on-failure=false --ginkgo.focus='Windows' --ginkgo.skip='Slow' --node-os-distro=window --non-blocking-taints="node-role.kubernetes.io/master,os"
+on a cluster like this:
+
+kubo@jumper:~$ kubectl get nodes
+NAME                                              STATUS   ROLES                  AGE     VERSION
+test01-control-plane-cz45r                        Ready    control-plane,master   6h58m   v1.22.3+vmware.1
+test01-md-0-windows-containerd-657c5bcccf-pzhcg   Ready    <none>                 6h54m   v1.22.3+vmware.1
+Results in this method being called, and reporting there are currently no ready, schedulable nodes
+
+func GetReadySchedulableNodes(c clientset.Interface) (nodes *v1.NodeList, err error) {
+	nodes, err = checkWaitListSchedulableNodes(c)
+	if err != nil {
+		return nil, fmt.Errorf("listing schedulable nodes error: %s", err)
+	}
+	Filter(nodes, func(node v1.Node) bool {
+		return IsNodeSchedulable(&node) && isNodeUntainted(&node)
+	})
+	if len(nodes.Items) == 0 {
+		return nil, fmt.Errorf("there are currently no ready, schedulable nodes in the cluster")
+	}
+What did you expect to happen?
+a Single node windows cluster should be able to run at least some e2e tests even though it would still fail conformance, admittedly.
+
+How can we reproduce it (as minimally and precisely as possible)?
+./e2e.test --provider=local --kubeconfig=/home/kubo/.kube/config --dump-logs-on-failure=false --ginkgo.focus='Windows' --ginkgo.skip='Slow' --node-os-distro=window --non-blocking-taints="node-role.kubernetes.io/master,os"
+on a cluster w/ only one master node
+
+Anything else we need to know?
+No response
+
+Kubernetes version
+Details
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

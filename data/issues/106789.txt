@@ -1,0 +1,86 @@
+title:
+dockershim.sock in 1.23 only supports v1 of CRI and tools dependent on v1alpha2 will not work #106798
+
+user:
+SergeyKanzhelev 
+
+status:
+closed
+
+contributor:
+alextp
+gunan
+
+labels:
+kind/bug
+kind/regression
+priority/critical-urgent
+sig/node
+triage/accepted
+
+description:
+What happened?
+With this change: #106501 the version of CRI API that dockershim.sock exposes is v1 (as oppose to v1alpha2 it used to be). So tools that takes dependency on dockershim.sock will fail with:
+
+rpc error: code = Unimplemented desc = unknown service runtime.v1alpha2.ImageServicepanic
+/sig node
+/priority critical-urgent
+
+What did you expect to happen?
+v1alpha2 is exposed as before. Especially given that we only have a single release left where dockershim will present
+
+How can we reproduce it (as minimally and precisely as possible)?
+For example, this program will fail on 1.23
+
+package main
+
+import (
+	"context"
+	"fmt"
+
+	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
+
+	"google.golang.org/grpc"
+)
+
+const (
+    addr = "unix:///var/run/dockershim.sock"
+)
+
+func main() {
+    ctx := context.Background()
+    newclient, err := NewImageService()
+    if err != nil {
+        fmt.Printf("error with client: %v", err)
+    }
+    images, err := newclient.ListImages(ctx, &runtimeapi.ListImagesRequest{})
+    if err != nil {
+        fmt.Printf("error getting images: %v", err)
+    }
+    for _, img := range images.Images {
+        fmt.Println(img.RepoTags)
+    }
+
+}
+
+func NewImageService() (runtimeapi.ImageServiceClient, error) {
+    conn, err := grpc.Dial(addr, grpc.WithInsecure())
+    return runtimeapi.NewImageServiceClient(conn), err
+}
+Anything else we need to know?
+No response
+
+Kubernetes version
+1.23
+
+Cloud provider
+any
+
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

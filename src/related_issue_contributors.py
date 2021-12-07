@@ -10,7 +10,7 @@ def use_case():
     km_labels = km[1]
     # iterate over files in that directory
     count = 0
-    users = []
+    contributors = []
     for filename in os.listdir(directory):
         if(km_labels[count] != cluster_no):
             count += 1
@@ -22,12 +22,16 @@ def use_case():
             with open(file, 'r') as f:
                 for line in f:
                     line = line.strip()
-                    if line.startswith('contributor:'):
+                    # print(line)
+                    if line.startswith('contributor:') or line.startswith('contributors:') or line.startswith('contributor :') :
                         flag = True
                         continue
-                    if(line.startswith('status:') or len(line) == 0):
+                    if(len(line) == 0):
+                        # print(line)
                         flag = False 
                     if(flag):
-                        users.append(line)
+                        # print(line)
+                        contributors.append(line)
         count += 1
-    print(users)
+    contributors = set(contributors)
+    print(contributors)

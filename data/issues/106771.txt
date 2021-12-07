@@ -1,0 +1,30 @@
+title:
+Kubelet --cluster-dns-service vs --clusterdns (maybe)
+
+user:
+thockin
+
+status:
+open
+
+contributor:
+
+
+labels:
+area/dns
+area/kubelet
+needs-triage
+sig/cluster-lifecycle
+sig/network
+sig/node
+
+description:
+xref #101682
+
+I have wondered if we should add a kubelet option like --cluster-dns-service (as an alternative to --cluster-dns) which takes a service ns/name (e.g. "kube-system/kube-dns") and looks up the IP(s). That would avoid the need for a static DNS IP at all.
+
+Kubelet could spawn a gorotine to poll it. Any pod that starts before the DNS Service is up would not get a nameserver or maybe we just don't start pods which need that value until resolves. E.g. hostNetwork pods could start.
+
+This would obviate the need for a special static DNS IP (the .10 IP by convention).
+
+@aojea

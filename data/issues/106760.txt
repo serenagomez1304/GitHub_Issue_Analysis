@@ -1,0 +1,99 @@
+title:
+Why my apiserver requests per second so high, but everything is OK? #106760
+
+user:
+sunlintong 
+
+status:
+closed
+
+contributor:
+gunan
+
+labels:
+kind/support
+needs-triage
+sig/instrumentation
+
+description:
+What happened?
+My cluster’s apiserver seems handling millions of request per-second, what’s the wrong?
+
+I execute the follow promql to get apiserver qps:
+
+topk(10, sum(irate(apiserver_request_total[5m]))without(component, job))
+response:
+
+{code="200", contentType="application/vnd.kubernetes.protobuf", resource="persistentvolumes", scope="cluster", verb="GET", version="v1"} 
+11731218.203982122
+{code="200", contentType="application/vnd.kubernetes.protobuf", resource="persistentvolumeclaims", scope="namespace", verb="GET", version="v1"} 
+11639428.28118651
+{code="200", contentType="application/json", group="argoproj.io", resource="applications", scope="namespace", verb="PATCH", version="v1alpha1"} 
+11479909.256607212
+{code="200", contentType="application/json", resource="configmaps", scope="namespace", verb="GET", version="v1"} 
+9541565.014221862
+{code="200", contentType="application/json", resource="pods", scope="namespace", verb="LIST", version="v1"} 
+9079504.063388867
+{code="200", contentType="application/json", group="apps", resource="deployments", scope="namespace", verb="LIST", version="v1"} 
+8947495.73344169
+{code="200", contentType="application/vnd.kubernetes.protobuf", group="coordination.k8s.io", resource="leases", scope="namespace", verb="GET", version="v1"} 
+6161645.875660301
+{code="200", contentType="application/json", group="apps", resource="statefulsets", scope="namespace", verb="LIST", version="v1"} 
+5423756.281734149
+{code="200", contentType="application/json", group="apps", resource="daemonsets", scope="namespace", verb="LIST", version="v1"} 
+5423471.422991798
+{code="0", contentType="application/vnd.kubernetes.protobuf;stream=watch", resource="secrets", scope="namespace", verb="WATCH", version="v1"} 
+4798630.841121496
+As you see, the QPS is more than 10 millions. It’s unbelievable!
+There’s only 21 nodes(3 of them is master, means 3 apiserver replicas) and 2000+ pods in my cluster.
+And every apiserver replicas user no more than 1 core CPU and 4Gi memory. They shouldn’t hold so much request, who can tell me why?
+
+BTW, I also opened a discussion at https://discuss.kubernetes.io/t/why-my-apiserver-qps-so-high-but-everything-is-ok/18171.
+
+What did you expect to happen?
+Normal QPS value.
+
+How can we reproduce it (as minimally and precisely as possible)?
+I don't know. I can only tell you my environment.
+
+Anything else we need to know?
+$ kubectl get node | wc -l
+21
+
+$ kubectl get pod --all-namespaces | wc -l
+2337
+
+$ kubectl top node
+NAME     CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+node10   10386m       23%    100750Mi        40%       
+node15   6699m        18%    147153Mi        67%       
+node16   16755m       37%    113746Mi        46%       
+node18   9266m        25%    228007Mi        103%      
+node27   17247m       38%    121547Mi        49%       
+node28   13301m       29%    100268Mi        40%       
+node29   6783m        15%    70531Mi         28%       
+node30   5277m        11%    72072Mi         29%       
+node31   9835m        21%    136926Mi        55%       
+node32   7719m        17%    155153Mi        62%       
+node79   5354m        14%    89376Mi         40%       
+node82   6896m        15%    130517Mi        52%       
+node83   10415m       23%    90677Mi         36%       
+node84   1199m        4%     9598Mi          8%        
+node85   2230m        9%     38122Mi         29%       
+node86   1609m        6%     13250Mi         10%       
+node87   6446m        26%    84130Mi         74%       
+node88   9379m        39%    77181Mi         59%       
+node89   9115m        28%    95447Mi         74%       
+node91   7365m        23%    90537Mi         70% 
+Kubernetes version
+Details
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

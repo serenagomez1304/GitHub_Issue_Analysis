@@ -1,0 +1,71 @@
+title:
+hack/update-vendor.sh failed due to k8s.io/kubernetes/test/integration/examples
+
+user:
+ssst0n3
+
+status:
+open
+
+contributor:
+
+
+labels:
+area/code-organization
+kind/bug
+needs-triage
+sig/architecture
+
+description:
+What happened?
+hack/update-vendor.sh failed
+
+root@host:~# git clone https://github.com/kubernetes/kubernetes.git
+root@host:~# cd kubernetes/
+root@host:~/kubernetes# git checkout v1.22.4
+...
+HEAD is now at b695d79d4f9 Release commit for Kubernetes v1.22.4
+root@host:~/kubernetes# ./build/shell.sh 
++++ [1127 11:57:55] Verifying Prerequisites....
++++ [1127 11:57:55] Building Docker image kube-build:build-5fe81ecaa8-5-v1.22.0-go1.16.10-buster.0
++++ [1127 12:02:01] Creating data container kube-build-data-5fe81ecaa8-5-v1.22.0-go1.16.10-buster.0
++++ [1127 12:02:14] Syncing sources to container
++++ [1127 12:02:18] Output from this container will NOT be rsynced out upon completion. Set KUBE_RUN_COPY_OUTPUT=y to enable.
++++ [1127 12:02:18] Running build command...
+root@host:~# ./hack/update-vendor.sh 
++++ [1127 12:03:16] logfile at /tmp/update-vendor.IGZu/update-vendor.log
++++ [1127 12:03:16] go.mod: update staging references
+An error has occurred. Please see more details in /tmp/update-vendor.IGZu/update-vendor.log
+root@host:~# tail /tmp/update-vendor.IGZu/update-vendor.log
+go: downloading github.com/sergi/go-diff v1.1.0
+go: downloading go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5
+go: downloading github.com/cockroachdb/logtags v0.0.0-20190617123548-eb05cc24525f
+go: downloading github.com/getsentry/raven-go v0.2.0
+go: downloading github.com/certifi/gocertifi v0.0.0-20200922220541-2c3bb06c6054
+go: finding module for package k8s.io/sample-apiserver/pkg/generated/openapi
+k8s.io/kubernetes/test/integration/examples tested by
+	k8s.io/kubernetes/test/integration/examples.test imports
+	k8s.io/sample-apiserver/pkg/cmd/server imports
+	k8s.io/sample-apiserver/pkg/generated/openapi: module k8s.io/sample-apiserver@latest found (v0.22.4, replaced by ./staging/src/k8s.io/sample-apiserver), but does not contain package k8s.io/sample-apiserver/pkg/generated/openapi
+What did you expect to happen?
+hack/update-vendor.sh executed sucessfully
+
+How can we reproduce it (as minimally and precisely as possible)?
+follow the steps above please
+
+Anything else we need to know?
+No response
+
+Kubernetes version
+v1.22.4
+
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

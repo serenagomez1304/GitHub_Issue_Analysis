@@ -1,0 +1,43 @@
+title:
+Handle detach operations after A/D controller has shut down and pod referencing a CSI migrated volume has been deleted while the A/D controller was down
+
+user:
+ddebroy
+
+status:
+closed
+
+contributor:
+allenlavoie
+MarkDaoust
+
+labels:
+kind/bug
+needs-triage
+sig/storage
+
+description:
+What happened?
+If A/D controller has shut down and pod referencing a CSI migrated volume is deleted (as commented in https://github.com/kubernetes/kubernetes/blob/master/pkg/volume/csi/csi_attacher.go#L417-L420), the detach may not be handled correctly. Specific handing of this situation in 129f153#diff-3e8f8a6e5eca57db8e84bcc6c896f0a3b10289fe55d8e999b4bdf1cfdc0de394L510 was removed. Audit and bring back correct handling of this situation.
+
+What did you expect to happen?
+If A/D controller has shut down and pod referencing a CSI migrated volume is deleted (as commented in https://github.com/kubernetes/kubernetes/blob/master/pkg/volume/csi/csi_attacher.go#L417-L420), the detach should be handled correctly.
+
+How can we reproduce it (as minimally and precisely as possible)?
+A/D controller needs to be shut down and pod referencing a CSI migrated volume is deleted during that window.
+
+Anything else we need to know?
+No response
+
+Kubernetes version
+Details
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

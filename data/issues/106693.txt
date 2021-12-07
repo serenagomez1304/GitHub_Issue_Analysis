@@ -1,0 +1,46 @@
+title:
+Release notes in CHANGELOGs no longer contain links to the PR itself and to the PR author #106693
+
+user:
+ialidzhikov 
+
+status:
+closed
+
+contributor:
+d0k
+vrv
+
+labels:
+area/release-eng
+kind/bug
+needs-triage
+sig/release
+
+description:
+What happened?
+Release notes in CHANGELOGs no longer contain links to the PR itself and to the author.
+Open https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.22.md#changelog-since-v1223 and verify that the PR and the PR author are not links (just plain text).
+Open https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.22.md#changelog-since-v1221 and verify that the PR and the PR author are links.
+
+What did you expect to happen?
+The release notes to contain links (not plain text) to the PR itself and to the PR author (as it was previously).
+
+How can we reproduce it (as minimally and precisely as possible)?
+See above.
+
+Anything else we need to know?
+No response
+
+Kubernetes version
+Details
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

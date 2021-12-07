@@ -1,0 +1,61 @@
+title:
+Unable to upgrade cluster more than 2 times using kubeadm.
+
+user:
+ak2766
+
+status:
+open
+
+contributor :
+yoangtan
+
+labels:
+area/kubeadm
+kind/bug
+needs-triage
+priority/awaiting-more-evidence
+sig/cluster-lifecycle
+
+description:
+What happened?
+I deployed a cluster of 10 nodes - 3 control-plane nodes and 7 worker nodes - and an external 3 node ETCD cluster on the 3 control-plane nodes. The initial deployment was for v1.20.13. I created a BASH script after going through Kubernetes the hard way.
+
+I then proceeded to upgrade the cluster using another BASH script to v1.21.7. That did not go so well. Well, the upgrade completed successfully but the static pod manifests were still pointing to the old version - i.e. kubectl version would tell me that client was at v1.21.7 but server was still at v1.20.13. I then went into the /etc/kubernetes/manifests directory, moved the manifests out, modified the image: key to point to the new version, then moved them back to their proper location and afterwards both client and server were reporting the same version. Good. I edited my script to add this to avoid having to do it again and life was good until I went to upgrade to v1.22.4.
+
+My first attempt to upgrade to v1.22.4 went as below:
+
+ATTEMPT 1: kubeadm upgrade plan
+I then tried something interesting:
+
+# kubectl -n kube-system get cm kubelet-config-1.20 -oyaml | sed 's/1.20/1.21/' | kubectl apply -f -
+configmap/kubelet-config-1.21 created
+Obviously I do not know the implications of my actions - I'm trying stuff to see what sticks...
+
+I then tried the upgrade plan again:
+
+ATTEMPT 2: kubeadm upgrade plan
+What did you expect to happen?
+I expected kubeadm upgrade apply to work reliably from an initial deployment of Kubernetes v1.20.13 then to v1.21.7 and finally to v1.22.4 without requiring manual intervention as seen above.
+
+How can we reproduce it (as minimally and precisely as possible)?
+Deploy a Kubernetes cluster at v1.20.13 using kubeadm, then attempt to upgrade to version v1.22.4 using kubeadm.
+
+Anything else we need to know?
+No response
+
+Kubernetes version
+Details
+Cloud provider
+N/A
+
+OS version
+Details
+Install tools
+N/A
+
+Container runtime (CRI) and and version (if applicable)
+containerd://1.4.12
+
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+N/A

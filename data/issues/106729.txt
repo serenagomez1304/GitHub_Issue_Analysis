@@ -1,0 +1,55 @@
+title:
+Interaction between NodeUnstageVolume and NodePublishVolume
+
+user:
+gman0
+
+status:
+open
+
+contributor:
+gunan
+
+labels:
+kind/bug
+needs-triage
+sig/storage
+
+description:
+What happened?
+Interaction between failing NodeUnstageVolume and NodePublishVolume results in unmountable volumes.
+
+We've observed a following series of events taking place:
+
+The last consumer of a volume leaves the node, triggering NodeUnstageVolume.
+For some reason this call fails, but still manages to unmount the volume from the node. Nevertheless, it returns an error.
+Kubelet keeps retrying NodeUnstageVolume, returning an error each time.
+In the meantime, a new Pod is scheduled on this node, mounting the same volume that's still being repeatedly attempted to be unstaged.
+Kubelet stops issuing NodeUnstageVolume since there's now at least a single consumer of the volume on the node.
+Kubelet invokes NodePublishVolume only (!), without staging the volume first.
+Unless a CSI driver doesn't try to somehow restore missing volumes in staging_target_path by itself, these volumes are rendered unmountable on the node due to absent NodeStageVolume call. While it probably could do such restoration, this sounds more like kubelet not being up to CSI spec in this scenario.
+
+What did you expect to happen?
+After issuing NodeUnstageVolume calls, kubelet should have called NodeStageVoume before calling NodePublishVolume.
+
+How can we reproduce it (as minimally and precisely as possible)?
+Have a CSI driver that supports STAGE_UNSTAGE_VOLUME Node service capability.
+Have NodeUnstageVolume return an error that triggers a retry (in our case it was INTERNAL).
+Anything else we need to know?
+No response
+
+Kubernetes version
+Details
+Cloud provider
+Details
+OS version
+No response
+
+Install tools
+No response
+
+Container runtime (CRI) and and version (if applicable)
+No response
+
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+No response

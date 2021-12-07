@@ -41,6 +41,7 @@ def mbkmeans_clusters(X, k, mb, print_silhouette_values, ):
             print(
                 f"    Cluster {s[0]}: Size:{s[1]} | Avg:{s[2]:.2f} | Min:{s[3]:.2f} | Max: {s[4]:.2f}"
             )
+    print(km.labels_)
     return km, km.labels_
 
 # from sklearn import metrics

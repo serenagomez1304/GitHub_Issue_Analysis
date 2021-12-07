@@ -1,0 +1,200 @@
+title:
+kubeletConfig - containerLogMaxSize not working
+
+user:
+lazarkrstic
+
+status:
+open
+
+contributor:
+vrv
+hawkinsp
+
+labels:
+kind/bug
+needs-sig
+needs-triage
+
+description:
+What happened?
+I created EKS using eksctl tool and than added a new node group. I am using kubeletExtraConfig for setting log maximum size of 500MB, but it's not working. I still get only tail of container log. The size of returned log is 2.39MB.
+Here is kubelet config
+
+{
+    "kubeletconfig": {
+        "enableServer": true,
+        "syncFrequency": "1m0s",
+        "fileCheckFrequency": "20s",
+        "httpCheckFrequency": "20s",
+        "address": "0.0.0.0",
+        "port": 10250,
+        "tlsCipherSuites": [
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+            "TLS_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_RSA_WITH_AES_128_GCM_SHA256"
+        ],
+        "serverTLSBootstrap": true,
+        "authentication": {
+            "x509": {
+                "clientCAFile": "/etc/kubernetes/pki/ca.crt"
+            },
+            "webhook": {
+                "enabled": true,
+                "cacheTTL": "2m0s"
+            },
+            "anonymous": {
+                "enabled": false
+            }
+        },
+        "authorization": {
+            "mode": "Webhook",
+            "webhook": {
+                "cacheAuthorizedTTL": "5m0s",
+                "cacheUnauthorizedTTL": "30s"
+            }
+        },
+        "registryPullQPS": 5,
+        "registryBurst": 10,
+        "eventRecordQPS": 5,
+        "eventBurst": 10,
+        "enableDebuggingHandlers": true,
+        "healthzPort": 10248,
+        "healthzBindAddress": "127.0.0.1",
+        "oomScoreAdj": -999,
+        "clusterDomain": "cluster.local",
+        "clusterDNS": [
+            "10.100.0.10"
+        ],
+        "streamingConnectionIdleTimeout": "4h0m0s",
+        "nodeStatusUpdateFrequency": "10s",
+        "nodeStatusReportFrequency": "5m0s",
+        "nodeLeaseDurationSeconds": 40,
+        "imageMinimumGCAge": "2m0s",
+        "imageGCHighThresholdPercent": 85,
+        "imageGCLowThresholdPercent": 80,
+        "volumeStatsAggPeriod": "1m0s",
+        "cgroupRoot": "/",
+        "cgroupsPerQOS": true,
+        "cgroupDriver": "cgroupfs",
+        "cpuManagerPolicy": "none",
+        "cpuManagerReconcilePeriod": "10s",
+        "memoryManagerPolicy": "None",
+        "topologyManagerPolicy": "none",
+        "topologyManagerScope": "container",
+        "runtimeRequestTimeout": "2m0s",
+        "hairpinMode": "hairpin-veth",
+        "maxPods": 35,
+        "podPidsLimit": -1,
+        "resolvConf": "/etc/resolv.conf",
+        "cpuCFSQuota": true,
+        "cpuCFSQuotaPeriod": "100ms",
+        "nodeStatusMaxImages": 50,
+        "maxOpenFiles": 1000000,
+        "contentType": "application/vnd.kubernetes.protobuf",
+        "kubeAPIQPS": 5,
+        "kubeAPIBurst": 10,
+        "serializeImagePulls": false,
+        "evictionHard": {
+            "memory.available": "100Mi",
+            "nodefs.available": "10%",
+            "nodefs.inodesFree": "5%"
+        },
+        "evictionPressureTransitionPeriod": "5m0s",
+        "enableControllerAttachDetach": true,
+        "protectKernelDefaults": true,
+        "makeIPTablesUtilChains": true,
+        "iptablesMasqueradeBit": 14,
+        "iptablesDropBit": 15,
+        "featureGates": {
+            "RotateKubeletServerCertificate": true
+        },
+        "failSwapOn": true,
+        "containerLogMaxSize": "500Mi",
+        "containerLogMaxFiles": 5,
+        "configMapAndSecretChangeDetectionStrategy": "Watch",
+        "kubeReserved": {
+            "cpu": "70m",
+            "ephemeral-storage": "1Gi",
+            "memory": "640Mi"
+        },
+        "enforceNodeAllocatable": [
+            "pods"
+        ],
+        "volumePluginDir": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/",
+        "logging": {
+            "format": "text"
+        },
+        "enableSystemLogHandler": true,
+        "shutdownGracePeriod": "0s",
+        "shutdownGracePeriodCriticalPods": "0s",
+        "enableProfilingHandler": true,
+        "enableDebugFlagsHandler": true
+    }
+}
+What did you expect to happen?
+I expected to get full container log, not just log tail.
+
+How can we reproduce it (as minimally and precisely as possible)?
+To reproduce this problem create EKS with eksctl and add node group.
+
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: <cluster-name>
+  region: eu-central-1
+
+nodeGroups:
+  - name: worker-spot-large-log
+    labels: { instance-type: spot }
+    instanceType: t3.large
+    minSize: 2
+    maxSize: 30
+    desiredCapacity: 2
+    availabilityZones: ["eu-central-1a", "eu-central-1b", "eu-central-1c"]
+    kubeletExtraConfig:
+        containerLogMaxSize: "500Mi"
+        containerLogMaxFiles: 5
+And then apply job (be avare of sheduling job to target node grop). I created demo docker image for genereating random data to stdout based on commnad head -c $1 </dev/urandom. Image is available at Docker Hub repo.
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: log-large-data
+spec:
+  template:
+    spec:
+      containers:
+      - name: log-large-data
+        image: krstic94/generate-log
+        args: ["10M"]
+        resources:
+          requests:
+            memory: "1.5Gi"
+            cpu: "1024m"
+          limits:
+            memory: "2Gi"
+            cpu: "2048m"
+      restartPolicy: Never
+  backoffLimit: 4
+Anything else we need to know?
+I was in contact with eksctl team, they comfirmed that configuration is ok, but k8s has an unexpected behaviour. Read more at link.
+
+Kubernetes version
+Details
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

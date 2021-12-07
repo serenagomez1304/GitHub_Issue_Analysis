@@ -1,0 +1,87 @@
+title:
+v1.23.0-rc.0 breaks crictl images for Docker container-runtime (works fine on 1.23.0-beta.0)#106807
+
+user:
+medyagh 
+
+status:
+closed
+
+contributor:
+sanjoy
+alextp
+d0k
+
+labels:
+kind/bug
+needs-triage
+sig/node
+
+description:
+What happened?
+On minikube HEAD we tried to bump the "newest" Kubernetes version from k8s 1.23.0-beta.0 to k8s v1.23.0-rc.0
+
+however this breaks "crictl images" command
+
+$ minikube ssh
+docker@minikube:~$ sudo crictl images
+FATA[0000] listing images: rpc error: code = Unimplemented desc = unknown service runtime.v1alpha2.ImageService 
+https://github.com/kubernetes/minikube/issues/13077
+however if we start minikube with 1.23.0-beta.0 crictl works fine
+
+$ make;mk delete --all;mk start --kubernetes-version=v1.23.0-beta.0
+$ mk ssh
+docker@minikube:~$ sudo crictl images
+IMAGE                                     TAG                 IMAGE ID            SIZE
+gcr.io/k8s-minikube/storage-provisioner   v5                  ba04bb24b9575       29MB
+k8s.gcr.io/coredns/coredns                v1.8.4              6d3ffc2696ac2       44.4MB
+k8s.gcr.io/coredns/coredns                v1.8.6              edaa71f2aee88       46.8MB
+k8s.gcr.io/etcd                           3.5.0-0             2252d5eb703b0       364MB
+k8s.gcr.io/etcd                           3.5.1-0             1040f7790951c       132MB
+k8s.gcr.io/kube-apiserver                 v1.23.0-beta.0      70f3ee870024e       132MB
+k8s.gcr.io/kube-controller-manager        v1.23.0-beta.0      ba6fcb43638a3       122MB
+k8s.gcr.io/kube-proxy                     v1.23.0-beta.0      e223498b094cf       109MB
+k8s.gcr.io/kube-scheduler                 v1.23.0-beta.0      916a7b78e5641       52.8MB
+k8s.gcr.io/pause                          3.6                 7d46a07936af9       484kB
+kubernetesui/dashboard                    v2.3.1              5bb89698273d8       217MB
+kubernetesui/metrics-scraper              v1.0.7              5717d272af6d4       32.5MB
+in changelog I see there are API changes https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.23.md#api-change
+but I dont see any messages on how the end users would need to adopt to these changes. or the crictl users
+
+I tried with crictl version v1.21.0 and crictl version v1.22.0 and for both I got the same error,
+
+(mind that this happens for Docker container runtime and it works fine if the container runtime is changes for containerd)
+
+What did you expect to happen?
+I expected "sudo crictl images" to reuturn list of images insted of error
+
+How can we reproduce it (as minimally and precisely as possible)?
+on minikube head
+
+try these two
+
+$ make./out/minikube delete --all;./out/minikube start --kubernetes-version=v1.23.0-beta.0
+$ ./ou/minikube ssh sudo crictl images
+
+$ make./out/minikube delete --all;./out/minikube start --kubernetes-version=v1.23.0-rc.0
+
+$ ./ou/minikube ssh sudo crictl images
+
+Anything else we need to know?
+No response
+
+Kubernetes version
+v1.23.0-rc.0
+
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details
+Related Issue kubernetes/minikube#13077
+Related PR kubernetes/minikube#13073

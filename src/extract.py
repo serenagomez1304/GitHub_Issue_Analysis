@@ -12,9 +12,11 @@ for filename in os.listdir(directory):
     if os.path.isfile(file):
         data = []
         flag=False
+        # print(file)
         with open(file,'r') as f:
             for line in f:
                 if line.startswith('title:') or line.startswith('labels:') or line.startswith('description:'):
+                # if line.startswith('title:') or line.startswith('description:'):
                     flag=True
                     continue
                 if line.strip().startswith('user:'):

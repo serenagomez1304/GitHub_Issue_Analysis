@@ -1,0 +1,118 @@
+title:
+"procMount=unmasked" of pod doesn't work when use docker as runtime
+
+user:
+silenceper
+
+status:
+closed
+
+contributor:
+benoitsteiner
+caisq
+
+labels:
+kind/bug
+priority/backlog
+sig/node
+triage/accepted
+
+description:
+What happened?
+"procMount=unmasked" of pod doesn't work when use docker as container runtime.
+
+docker inspect xxx
+
+...
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/asound",
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+...
+pod:
+
+...
+        imagePullPolicy: Always
+        name: container
+        resources:
+          limits:
+            cpu: "2"
+            memory: 4Gi
+          requests:
+            cpu: "2"
+            memory: 4Gi
+        securityContext:
+          capabilities:
+            add:
+            - all
+            drop:
+            - SYS_TIME
+          procMount: Unmasked
+        terminationMessagePath: /dev/termination-log
+...
+What did you expect to happen?
+set MaskedPaths and ReadonlyPaths empty.
+
+How can we reproduce it (as minimally and precisely as possible)?
+use dockerd as container runtime
+
+Anything else we need to know?
+No response
+
+Kubernetes version
+v1.20.6
+
+Cloud provider
+none
+
+OS version
+CentOS Linux release 7.9 (Final)
+
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Client: Docker Engine - Community
+Version: 19.03.8
+API version: 1.40
+Go version: go1.12.17
+Git commit: afacb8b
+Built: Wed Mar 11 01:27:04 2020
+OS/Arch: linux/amd64
+Experimental: false
+
+Server: Docker Engine - Community
+Engine:
+Version: 19.03.9
+API version: 1.40 (minimum version 1.12)
+Go version: go1.13.10
+Git commit: 9d988398e7
+Built: Fri May 15 00:28:17 2020
+OS/Arch: linux/amd64
+Experimental: false
+containerd:
+Version: 1.2.13
+GitCommit: 7ad184331fa3e55e52b890ea95e65ba581ae3429
+runc:
+Version: 1.0.0-rc95
+GitCommit: b9ee9c6314599f1b4a7f497e1f1f856fe433d3b7
+docker-init:
+Version: 0.18.0
+GitCommit: fec3683
+
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

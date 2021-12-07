@@ -1,0 +1,82 @@
+title:
+support to load custom plugins with plugin package so that users can use custom plugins without building custom scheduler #106705
+
+user:
+sanposhiho 
+
+status:
+closed
+
+contributor:
+
+labels:
+kind/feature
+needs-triage
+sig/scheduling
+
+description:
+Hello team.
+/sig scheduling
+
+What would you like to be added?
+This is an idea and is needed to be discussed.
+
+There is a unique package called plugin in Go standard library.
+https://pkg.go.dev/plugin
+
+This package may enable us to allow users to use their custom plugin without building custom scheduler.
+
+(Please let me know if this same idea has already been discussed in the past.)
+
+PoC
+What I propose to implemente is like this: https://github.com/sanposhiho/kubernetes/pull/4/files
+I have confirmed that it's technically feasible.
+
+Steps:
+1. create plugin
+create plugin as usual. It should be package main to build as plugin.
+
+package main
+
+import (
+	"context"
+	"strconv"
+
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kubernetes/pkg/scheduler/framework"
+)
+
+type NodeNumber struct{}
+var _ framework.ScorePlugin = &NodeNumber{}
+
+// implement plugins...
+2. build this file with -buildmode=plugin -trimpath
+go build -buildmode=plugin -trimpath -o nodenumber.so
+Then nodenumber.so file should be created. We can import this nodenumber plugin from this file.
+
+3. pass the file to scheduler as option
+	sched, err := scheduler.New(
+		clientSet,
+		informerFactory,
+		profile.NewRecorderFactory(evtBroadcaster),
+		ctx.Done(),
+		scheduler.WithCustomPluginFiles(map[string]string{
+			"NodeNumber": "nodenumber.so",
+				}),
+...
+Then, this scheduler will import nodenumber plugin from the file here.
+
+The implementation loads the plugin first, so this feature should not affect the performance of the scheduler if I understand correctly.
+
+concerns
+Based on my investigation, if we want to use plugin package, we have to build both the scheduler and the plugin with -trimpath because of golang/go#27751. There may be other workarounds for this issue, but I haven't found.
+We need to verify if we can use plugin package, including this issue.
+
+Why is this needed?
+Currently, users have to build custom scheduler when they want to use custom plugin.
+
+like this:
+https://github.com/kubernetes-sigs/scheduler-plugins/blob/b8d13e17a3e1f633d72d71276a3da6fecf89f2e3/cmd/scheduler/main.go#L46
+
+With this feature, users only need to build their custom plugin and pass the files to the default kube-scheduler through KubeSchedulerConfiguration. So they don't need to build their custom scheduler to use custom plugins.

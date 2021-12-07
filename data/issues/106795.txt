@@ -1,0 +1,122 @@
+title:
+Pod affinity with operator "NotIn" does not work
+
+user:
+chenhong0129
+
+status:
+open
+
+contributor:
+gunan
+jsimsa
+
+labels:
+kind/bug
+needs-triage
+sig/scheduling
+
+description:
+What happened?
+When I config Pod affinity with operator "NotIn", all replicas schedulered on the same node.
+More strangely，Other pods without related pod affinity/antiAffinity will also be schedulered to the node where Pod affinity with operator "NotIn" is running，Although the resources of this node are not optimal. When I change kube-scheduler debug log level to 10, It can be seen that the InterPodAffinity influenced the scoring.
+podAffinity config:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-affinity-notin
+spec:
+  affinity:
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: NotIn
+            values:
+            - pod-affinity-notin
+        topologyKey: kubernetes.io/hostname
+  containers:
+  - name: pod-affinity-notin
+  ......
+
+[root@m2 ~]# kubectl get pod -A -owide| grep xxx
+xxx    xxx-55c59ff7c-ltfwq                   2/2     Running            0          7s      177.177.x.x    name1     <none>           <none>
+xxx    xxx-55c59ff7c-rj8sc                   2/2     Running            0          7s      177.177.x.x    name1     <none>           <none>
+
+kube-scheduler.log：
+I1202 02:12:20.984486       1 eventhandlers.go:164] "Add event for unscheduled pod" pod="xxx/xxx-55c59ff7c-rj8sc"
+I1202 02:12:20.984676       1 scheduling_queue.go:849] "About to try and schedule pod" pod="xxx/xxx-55c59ff7c-rj8sc"
+I1202 02:12:20.984712       1 scheduler.go:459] "Attempting to schedule pod" pod="xxx/xxx-55c59ff7c-rj8sc"
+I1202 02:12:20.988321       1 resource_allocation.go:78] xxx-55c59ff7c-rj8sc -> name1: NodeResourcesBalancedAllocation, map of allocatable resources map[cpu:30000 memory:126330327040], map of requested resources map[cpu:8257 memory:19966984192] ,score 88,
+I1202 02:12:20.988483       1 resource_allocation.go:78] xxx-55c59ff7c-rj8sc -> name1: NodeResourcesLeastAllocated, map of allocatable resources map[cpu:30000 memory:126330327040], map of requested resources map[cpu:8257 memory:19966984192] ,score 78,
+I1202 02:12:20.988371       1 resource_allocation.go:78] xxx-55c59ff7c-rj8sc -> name2: NodeResourcesBalancedAllocation, map of allocatable resources map[cpu:30000 memory:126330335232], map of requested resources map[cpu:12567 memory:27525120000] ,score 79,
+I1202 02:12:20.988556       1 resource_allocation.go:78] xxx-55c59ff7c-rj8sc -> name2: NodeResourcesLeastAllocated, map of allocatable resources map[cpu:30000 memory:126330335232], map of requested resources map[cpu:12567 memory:27525120000] ,score 68,
+I1202 02:12:20.988411       1 resource_allocation.go:78] xxx-55c59ff7c-rj8sc -> name3: NodeResourcesBalancedAllocation, map of allocatable resources map[cpu:30000 memory:126330335232], map of requested resources map[cpu:24463 memory:56463720448] ,score 63,
+I1202 02:12:20.988576       1 resource_allocation.go:78] xxx-55c59ff7c-rj8sc -> name3: NodeResourcesLeastAllocated, map of allocatable resources map[cpu:30000 memory:126330335232], map of requested resources map[cpu:24463 memory:56463720448] ,score 36,
+I1202 02:12:20.988707       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodePreferAvoidPods" node="name1" score=1000000
+I1202 02:12:20.988736       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodePreferAvoidPods" node="name2" score=1000000
+I1202 02:12:20.988755       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodePreferAvoidPods" node="name3" score=1000000
+I1202 02:12:20.988778       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="PodTopologySpread" node="name1" score=0
+I1202 02:12:20.988792       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="PodTopologySpread" node="name2" score=0
+I1202 02:12:20.988812       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="PodTopologySpread" node="name3" score=0
+I1202 02:12:20.988826       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="TaintToleration" node="name1" score=100
+I1202 02:12:20.988843       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="TaintToleration" node="name2" score=100
+I1202 02:12:20.988856       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="TaintToleration" node="name3" score=100
+I1202 02:12:20.988876       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodeResourcesBalancedAllocation" node="name1" score=88
+I1202 02:12:20.988887       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodeResourcesBalancedAllocation" node="name2" score=79
+I1202 02:12:20.988899       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodeResourcesBalancedAllocation" node="name3" score=93
+I1202 02:12:20.988912       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="ImageLocality" node="name1" score=21
+I1202 02:12:20.988924       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="ImageLocality" node="name2" score=21
+I1202 02:12:20.988937       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="ImageLocality" node="name3" score=21
+_I1202 02:12:20.988948       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="InterPodAffinity" node="name1" score=100
+I1202 02:12:20.988964       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="InterPodAffinity" node="name2" score=0
+I1202 02:12:20.988975       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="InterPodAffinity" node="name3" score=0_
+I1202 02:12:20.988986       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodeResourcesLeastAllocated" node="name1" score=78
+I1202 02:12:20.989006       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodeResourcesLeastAllocated" node="name2" score=68
+I1202 02:12:20.989021       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodeResourcesLeastAllocated" node="name3" score=86
+I1202 02:12:20.989034       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodeAffinity" node="name1" score=0
+I1202 02:12:20.989049       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodeAffinity" node="name2" score=0
+I1202 02:12:20.989064       1 generic_scheduler.go:441] "Plugin scored node for pod" pod="xxx/xxx-55c59ff7c-rj8sc" plugin="NodeAffinity" node="name3" score=0
+I1202 02:12:20.989080       1 generic_scheduler.go:498] "Calculated node's final score for pod" pod="xxx/xxx-55c59ff7c-rj8sc" node="name1" score=1000387
+I1202 02:12:20.989098       1 generic_scheduler.go:498] "Calculated node's final score for pod" pod="xxx/xxx-55c59ff7c-rj8sc" node="name2" score=1000268
+I1202 02:12:20.989110       1 generic_scheduler.go:498] "Calculated node's final score for pod" pod="xxx/xxx-55c59ff7c-rj8sc" node="name3" score=1000300
+I1202 02:12:20.989312       1 default_binder.go:51] "Attempting to bind pod to node" pod="xxx/xxx-55c59ff7c-rj8sc" node="name1" 
+What did you expect to happen?
+When I config Pod affinity with operator "NotIn", all replicas schedulered on the different nodes.
+And this config cannot affect the scheduling of other pods.
+
+How can we reproduce it (as minimally and precisely as possible)?
+config Pod affinity with operator "NotIn"：
+podAffinity config:
+apiVersion: v1
+kind: Pod
+metadata:
+name: pod-affinity-notin
+spec:
+affinity:
+podAffinity:
+requiredDuringSchedulingIgnoredDuringExecution:
+- labelSelector:
+matchExpressions:
+- key: app
+operator: NotIn
+values:
+- pod-affinity-notin
+topologyKey: kubernetes.io/hostname
+containers:
+
+name: pod-affinity-notin
+......
+Anything else we need to know?
+No response
+
+Kubernetes version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

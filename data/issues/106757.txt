@@ -1,0 +1,52 @@
+title:
+kubelet /run interface not support spaces in commad
+
+user:
+NoicFank
+
+status:
+open
+
+contributors:
+mihaimaruseac
+av8ramit
+
+labels:
+kind/bug
+kind/support
+needs-triage
+sig/node
+
+description:
+What happened?
+why kubelet /run interface using space to split the cmd?
+
+params.cmd = strings.Split(request.QueryParameter("cmd"), " ")
+which leads to
+
+ls -> ok
+ls -a -> ok
+/bin/sh "ls" -> ok
+/bin/sh "ls -a" -> failed
+What did you expect to happen?
+I want to use kubelet /run interface to run a command in container, and get the run result. The command contains many spaces.
+
+How can we reproduce it (as minimally and precisely as possible)?
+send to kubelet /run interface
+
+curl -k -H "Authorization: xxx" -d 'cmd=/bin/sh -c "ls -l"' https:/xxx:10250/run/{ns}/{pod}/{container name}
+Anything else we need to know?
+No response
+
+Kubernetes version
+Details
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

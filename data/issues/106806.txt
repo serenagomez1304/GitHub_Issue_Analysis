@@ -1,0 +1,93 @@
+title:
+A StatefulSet does not respect fsGroup when creating a volume from a volumeClaimTemplate#10806
+
+user:
+victor-sudakov
+
+status:
+closed
+
+contributor:
+tensorflow-gardener
+sanjoy
+alextp
+
+labels:
+kind/bug
+needs-triage
+sig/storage
+
+description:
+What happened?
+I create a StatefulSet with a spec.template.spec.securityContext.fsGroup=65534. The complete manifest can be found below. After the creation of a Pod, however, the volume mountpoint remains with "root:root 755" permissions.
+
+What did you expect to happen?
+I expect the volume mountpoint to have "775 root:nobody" permissions.
+
+How can we reproduce it (as minimally and precisely as possible)?
+Please apply the manifest below, shell into the prometheus-0 Pod and check the permissions on the /mygooddisk mountpoint. They will not belong to fsGroup.
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: prometheus
+  name: prometheus
+spec:
+  replicas: 1
+  serviceName: prometheus-headless
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      securityContext:
+        fsGroup: 65534
+        fsGroupChangePolicy: Always
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+      containers:
+        - image: prom/prometheus
+          name: prometheus
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --web.config.file=/etc/prometheus/web.yml
+            - --storage.tsdb.path=/mygooddisk
+            - --web.console.libraries=/usr/share/prometheus
+          volumeMounts:
+            - mountPath: /etc/prometheus
+              name: config
+            - mountPath: /mygooddisk
+              name: gooddisk
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+  volumeClaimTemplates:
+    - metadata:
+        name: gooddisk
+      spec:  
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5G
+Anything else we need to know?
+I'm ready to provide any additional info.
+
+Kubernetes version
+Details
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

@@ -17,15 +17,21 @@ class Word2Vec:
         :return:
         """
         tags = {
-            'NN': 1,
-            'NNS': 1,
-            'NNP': 1,
-            'NNPS': 1,
-            'VB': 0.5,
-            'VBD': 0.5,
-            'VDB': 0.5,
-            'VBP': 0.5,
-            'VBZ': 0.5
+            'NN': 4,
+            'NNS': 4,
+            'NNP': 4,
+            'NNPS': 4,
+            'VB': 3,
+            'VBD': 3,
+            'VDB': 3,
+            'VBP': 3,
+            'VBZ': 3,
+            'JJ': 2,
+            'JJR': 2,
+            'JJS': 2,
+            'RB': 1,
+            'RBR': 1,
+            'RBS': 1
         }
         tag_sum = 0
         sum = 0

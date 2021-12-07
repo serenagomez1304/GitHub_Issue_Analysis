@@ -1,0 +1,61 @@
+title:
+why coredns oom score is -997? #106649
+
+user:
+vsxen
+
+status:
+closed
+
+contributor:
+sanjoy
+vrv
+
+labels:
+area/kubeadm
+kind/bug
+kind/support
+needs-sig
+needs-triage
+triage/needs-information
+
+description:
+What happened?
+why burstable pod oom score is -997?
+
+root@ubuntu-focal:/home/vagrant# kubectl -n kube-system describe  po coredns-57d4cbf879-l277z |grep -i qos
+QoS Class:                   Burstable
+root@ubuntu-focal:/home/vagrant# ps aux |grep core
+root        8181  0.4  1.8 746256 37092 ?        Ssl  02:05   0:00 /coredns -conf /etc/coredns/Corefile
+root        8417  0.3  1.8 746512 37024 ?        Ssl  02:05   0:00 /coredns -conf /etc/coredns/Corefile
+root        9217  0.0  0.1   8160  2532 pts/0    S+   02:06   0:00 grep --color=auto core
+root@ubuntu-focal:/home/vagrant# cat /proc/8181/oom_score_adj
+-997
+What did you expect to happen?
+oom socre is 998 ?
+
+How can we reproduce it (as minimally and precisely as possible)?
+root@ubuntu-focal:/home/vagrant# kubectl -n kube-system describe  po coredns-57d4cbf879-l277z |grep -i qos
+QoS Class:                   Burstable
+root@ubuntu-focal:/home/vagrant# ps aux |grep core
+root        8181  0.4  1.8 746256 37092 ?        Ssl  02:05   0:00 /coredns -conf /etc/coredns/Corefile
+root        8417  0.3  1.8 746512 37024 ?        Ssl  02:05   0:00 /coredns -conf /etc/coredns/Corefile
+root        9217  0.0  0.1   8160  2532 pts/0    S+   02:06   0:00 grep --color=auto core
+root@ubuntu-focal:/home/vagrant# cat /proc/8181/oom_score_adj
+-997
+# why  Burstable pod oom score is -997?
+Anything else we need to know?
+No response
+
+Kubernetes version
+Details
+Cloud provider
+Details
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

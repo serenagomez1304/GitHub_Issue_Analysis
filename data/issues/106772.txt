@@ -1,0 +1,58 @@
+title:
+grpc field name in probes is not consistent between json and proto #106772
+
+user:
+SergeyKanzhelev 
+
+status:
+closed
+
+contributor:
+tensorflow-gardener
+sanjoy
+
+labels:
+kind/bug
+priority/critical-urgent
+sig/node
+triage/accepted
+
+description:
+What happened?
+The new grpc probe feature introduced a new field for grpc probes that has an inconsistent name between json and proto and needs to be changed before release goes out. Otherwise this inconsistency will be stayed forever as it will be close to impossible to change field names.
+
+See thread: https://kubernetes.slack.com/archives/CJUQN3E4T/p1638309300059900
+
+/sig node
+/priority critical-urgent
+/milestone 1.23
+
+What did you expect to happen?
+Field
+
+kubernetes/staging/src/k8s.io/api/core/v1/types.go
+
+Line 2471 in e4952f3
+
+ GRPC *GRPCAction `json:"gRPC,omitempty" protobuf:"bytes,4,opt,name=grpc"` 
+to be called grpc (all lower case).
+How can we reproduce it (as minimally and precisely as possible)?
+this is just a schema change
+
+Anything else we need to know?
+No response
+
+Kubernetes version
+1.23
+
+Cloud provider
+Either
+
+OS version
+Details
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Details
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

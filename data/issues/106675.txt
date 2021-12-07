@@ -1,0 +1,92 @@
+title:
+When the pod needs to be deleted, terminate the image pull request？ #106675
+
+user:
+silenceper
+
+status:
+closed
+
+contributor:
+vrv
+
+labels:
+kind/bug
+kind/feature
+needs-triage
+sig/apps
+sig/node
+triage/needs-information
+
+description:
+What happened?
+I found that when the container is deleted, the image is being pulled until the image is pulled.
+
+What did you expect to happen?
+When the pod is deleted, terminate the mirror pull request
+
+How can we reproduce it (as minimally and precisely as possible)?
+Scheduling a new pod to node, the image is relatively large
+Then delete this pod
+As you can see in the kubelet log, the pull has not been terminated, and the pod has been deleted
+Nov 26 10:19:54 VM-218-33-centos kubelet[714]: I1126 10:19:54.327929     714 reflector.go:225] Stopping reflector *v1.Secret (0s) from object-"default"/"default-token-tlsjk"
+Nov 26 10:19:55 VM-218-33-centos kubelet[714]: I1126 10:19:55.408214     714 kubelet_pods.go:1243] Killing unwanted pod "nginx-deployment-794c4c669-6ck58"
+Nov 26 10:20:00 VM-218-33-centos kubelet[714]: I1126 10:20:00.907916     714 kube_docker_client.go:344] Pulling image "test-mirror.com/windows-server-2019:test-20210804": "713bc8380a02: Downloading [==========>                                        ]  1.045GB/5.104GB"
+Nov 26 10:20:10 VM-218-33-centos kubelet[714]: I1126 10:20:10.907914     714 kube_docker_client.go:344] Pulling image "test-mirror.com/windows-server-2019:test-20210804": "713bc8380a02: Downloading [===========>                                       ]  1.202GB/5.104GB"
+
+
+
+Anything else we need to know?
+No response
+
+Kubernetes version
+v1.20.6
+
+$ kubectl version
+# paste output here
+Cloud provider
+Details
+OS version
+CentOS Linux release 7.9 (Final)
+
+# On Linux:
+$ cat /etc/os-release
+# paste output here
+$ uname -a
+# paste output here
+
+# On Windows:
+C:\> wmic os get Caption, Version, BuildNumber, OSArchitecture
+# paste output here
+Install tools
+Details
+Container runtime (CRI) and and version (if applicable)
+Client: Docker Engine - Community
+ Version:           19.03.8
+ API version:       1.40
+ Go version:        go1.12.17
+ Git commit:        afacb8b
+ Built:             Wed Mar 11 01:27:04 2020
+ OS/Arch:           linux/amd64
+ Experimental:      false
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          19.03.9
+  API version:      1.40 (minimum version 1.12)
+  Go version:       go1.13.10
+  Git commit:       9d988398e7
+  Built:            Fri May 15 00:28:17 2020
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          1.2.13
+  GitCommit:        7ad184331fa3e55e52b890ea95e65ba581ae3429
+ runc:
+  Version:          1.0.0-rc95
+  GitCommit:        b9ee9c6314599f1b4a7f497e1f1f856fe433d3b7
+ docker-init:
+  Version:          0.18.0
+  GitCommit:        fec3683
+Related plugins (CNI, CSI, ...) and versions (if applicable)
+Details

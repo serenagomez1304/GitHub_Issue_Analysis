@@ -9,12 +9,12 @@ repo = "tensorflow"
 query_url = f"https://api.github.com/repos/{owner}/{repo}/issues"
 query_cont = f"https://api.github.com/repos/{owner}/{repo}/contributors"
 params = {
-    "state": "closed",
+    "state": "open",
 }
 headers = {'Authorization': f'token {token}'}
 response_issues = requests.get(query_url, headers = headers, params = params)
 response_cont = requests.get(query_cont, headers = headers, params = params)
-
+#print(response_issues.json()[0])
 contributors = []
 for contributor in response_cont.json():
     contributors.append(contributor['login'])
@@ -22,7 +22,7 @@ print(contributors)
 comments_info = []
 cont_info = {}
 for issue in response_issues.json():
-    if issue['number'] in range(53210, 53230):
+    if issue['number'] in range(53300, 53330):
         users_list = []
         comment_url = issue['comments_url']
         f = requests.get(comment_url)

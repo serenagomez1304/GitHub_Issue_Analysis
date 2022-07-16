@@ -7,6 +7,8 @@ directory = '../data/issues'
 # that directory
 str_list = []
 for filename in os.listdir(directory):
+#     if filename not in ['3.txt', '15.txt', '16.txt', '18.txt']:
+#         continue
     file = os.path.join(directory, filename)
     # checking if it is a file
     if os.path.isfile(file):

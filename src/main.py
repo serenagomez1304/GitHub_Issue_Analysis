@@ -7,7 +7,7 @@ import new_issue_related_users
 import new_issue_related_contributors
 
 if __name__ == "__main__":
-    print("Use Case 1: As a Contributor - Organize/group related issues.")
+    print("\n\nUse Case 1: As a Contributor - Organize/group related issues.")
     print("Use Case 2: As a Contributor - Collaborate with users who raised a certain group of issues.")
     print("Use Case 3: As a Contributor - Connect with contributors who work on similar issues.")
     print("Use Case 4: As a User - Explore all issues related to my new issue.")
